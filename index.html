@@ -54,7 +54,7 @@
   <div class="panel-title">帰宅班マップ</div>
   <select id="sel-store"></select>
   
-  <div class="input-container">
+  <div id="pac-container" class="input-container" style="display: none;">
     <input id="pac-input" type="text" placeholder="住所・施設名を入力して選択">
     <div class="clear-btn" onclick="clearInput('pac-input')">×</div>
   </div>
@@ -119,6 +119,7 @@ function loadGoogleMaps() {
   script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places&callback=init&loading=async`;
   script.async = true;
   document.head.appendChild(script);
+  document.getElementById('pac-container').style.display = 'block';
 }
 
 function init(){
