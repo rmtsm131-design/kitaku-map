@@ -29,7 +29,8 @@
     }
     input:not(:placeholder-shown) + .clear-btn { display: block; }
 
-    #pac-input { border: 2px solid #ff0000; display: none; background: #fffbe6; padding-right: 40px; }
+    /* 修正：初期表示を可能にするためdisplay:noneを解除 */
+    #pac-input { border: 2px solid #ff0000; background: #fffbe6; padding-right: 40px; }
     #inp-coords { padding-right: 40px; }
     
     #btn-calc { width: 100%; padding: 15px; background: #ff0000; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 900; font-size: 16px; box-shadow: 0 4px 0 #b30000; margin-top: 5px; }
@@ -94,29 +95,38 @@ function clearInput(id) {
 
 function loadGoogleMaps() {
   const script = document.createElement('script');
-  script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places&callback=init`;
+  // 修正：loading=asyncを追加し、Places APIの最新仕様に準拠
+  script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places&callback=init&loading=async`;
   script.async = true;
   document.head.appendChild(script);
-  document.getElementById('pac-input').parentElement.style.display = 'block';
 }
 
 function init(){
   const selector = document.getElementById('sel-store');
+  selector.innerHTML = ""; // 重複防止
   STORES.forEach((s, i) => { const o = document.createElement('option'); o.value = i; o.textContent = s.name; selector.appendChild(o); });
+  
+  if (map) { map.remove(); }
   map = L.map('map', { zoomControl: false });
   
   if (GOOGLE_MAPS_API_KEY) {
     L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}').addTo(map);
-    const autocomplete = new google.maps.places.Autocomplete(document.getElementById('pac-input'));
-    autocomplete.addListener('place_changed', function() {
-      const place = autocomplete.getPlace();
-      if (place.geometry) {
-        document.getElementById('inp-coords').value = `${place.geometry.location.lat()}, ${place.geometry.location.lng()}`;
-        calculate(); 
-      }
-    });
+    
+    // 修正：Googleライブラリがロードされている場合のみAutocompleteを実行
+    if (typeof google !== 'undefined' && google.maps && google.maps.places) {
+      const autocomplete = new google.maps.places.Autocomplete(document.getElementById('pac-input'));
+      autocomplete.addListener('place_changed', function() {
+        const place = autocomplete.getPlace();
+        if (place.geometry) {
+          document.getElementById('inp-coords').value = `${place.geometry.location.lat()}, ${place.geometry.location.lng()}`;
+          calculate(); 
+        }
+      });
+    }
   } else {
-    L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png').addTo(map);
+    L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', {
+      attribution: "国土地理院"
+    }).addTo(map);
   }
   
   guideLayer = L.featureGroup().addTo(map);
@@ -215,7 +225,13 @@ function calculate() {
   
   navigator.clipboard.writeText(`距離:${dStr} 方角:${hStr}`).then(showToast).catch(() => {});
 }
-if (GOOGLE_MAPS_API_KEY) { loadGoogleMaps(); } else { init(); }
+
+// 実行判定
+if (GOOGLE_MAPS_API_KEY) { 
+  loadGoogleMaps(); 
+} else { 
+  init(); 
+}
 </script>
 </body>
 </html>
