@@ -144,9 +144,7 @@ function init(){
       });
     }
   } else {
-    L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', {
-      attribution: "国土地理院"
-    }).addTo(map);
+    L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png').addTo(map);
   }
   
   guideLayer = L.featureGroup().addTo(map);
@@ -165,14 +163,18 @@ function getDestPoint(lat, lng, dist, angle) {
 }
 
 function drawGuides(lat, lng) {
-  const radii = [5000, 10000, 15000, 20000, 25000, 30000, 35000, 40000];
+  // 方角線と数字ラベルの描画
   for (let i = 0; i < 12; i++) {
-    const end = getDestPoint(lat, lng, 42000, (i * 30 - 15));
+    const end = getDestPoint(lat, lng, 20000, (i * 30 - 15));
     L.polyline([[lat, lng], [end.lat, end.lng]], { color: '#ff0000', weight: 4, opacity: 0.3 }).addTo(guideLayer);
-    const numPos = getDestPoint(lat, lng, 25000, i * 30);
-    L.marker([numPos.lat, numPos.lng], { icon: L.divIcon({ className: 'area-label-ultra', html: i.toString().padStart(2, '0') }), interactive: false }).addTo(guideLayer);
+    
+    const displayNum = (i === 0) ? "12" : i.toString().padStart(2, '0');
+    const numPos = getDestPoint(lat, lng, 12000, i * 30);
+    L.marker([numPos.lat, numPos.lng], { icon: L.divIcon({ className: 'area-label-ultra', html: displayNum }), interactive: false }).addTo(guideLayer);
   }
-  radii.forEach(r => {
+
+  // 同心円の描画（15km未満：5kmと10kmのみ）
+  [5000, 10000].forEach(r => {
     L.circle([lat, lng], { radius: r, color: '#ff0000', weight: 5, fillOpacity: 0, opacity: 0.6 }).addTo(guideLayer);
     const labelPos = getDestPoint(lat, lng, r, 225); 
     L.marker([labelPos.lat, labelPos.lng], { icon: L.divIcon({ className: 'dist-box-label', html: `<span>${r / 1000}km</span>` }), interactive: false }).addTo(guideLayer);
@@ -211,33 +213,41 @@ function calculate() {
   const a = Math.sin(dLat / 2)**2 + Math.cos(store.lat * Math.PI / 180) * Math.cos(target.lat * Math.PI / 180) * Math.sin(dLon / 2)**2;
   const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-  if (dist > 45) { alert("判定エリア外（45km超）です。"); return; }
   calcLayer.clearLayers();
 
   const bearing = (Math.atan2(Math.sin(dLon) * Math.cos(target.lat * Math.PI / 180), Math.cos(store.lat * Math.PI / 180) * Math.sin(target.lat * Math.PI / 180) - Math.sin(store.lat * Math.PI / 180) * Math.cos(target.lat * Math.PI / 180) * Math.cos(dLon)) * 180 / Math.PI + 360) % 360;
-  const hour = Math.floor(((bearing + 15) % 360) / 30);
-  const distClass = Math.ceil(dist / 5) * 5;
-
-  const path = [];
-  const startA = hour * 30 - 15, endA = hour * 30 + 15;
-  for (let deg = startA; deg <= endA; deg += 2) path.push(getDestPoint(store.lat, store.lng, distClass * 1000, deg));
-  for (let deg = endA; deg >= startA; deg -= 2) path.push(getDestPoint(store.lat, store.lng, (distClass - 5) * 1000, deg));
   
-  L.polygon(path.map(p => [p.lat, p.lng]), { color: '#ff0000', weight: 2, fillColor: '#ff0000', fillOpacity: 0.5 }).addTo(calcLayer);
+  // 方角判定：00を12に変換
+  let hourVal = Math.floor(((bearing + 15) % 360) / 30);
+  const hStr = (hourVal === 0) ? "12" : hourVal.toString().padStart(2, '0');
+  
+  // 距離判定：15km超は00
+  let dStr = "00";
+  if (dist <= 15) {
+    const distClass = Math.ceil(dist / 5) * 5;
+    dStr = distClass.toString().padStart(2, '0');
+    
+    // 15km以内の場合のみ扇形ポリゴンを描画
+    const path = [];
+    const startA = hourVal * 30 - 15, endA = hourVal * 30 + 15;
+    for (let deg = startA; deg <= endA; deg += 2) path.push(getDestPoint(store.lat, store.lng, distClass * 1000, deg));
+    for (let deg = endA; deg >= startA; deg -= 2) path.push(getDestPoint(store.lat, store.lng, (distClass - 5) * 1000, deg));
+    L.polygon(path.map(p => [p.lat, p.lng]), { color: '#ff0000', weight: 2, fillColor: '#ff0000', fillOpacity: 0.5 }).addTo(calcLayer);
+  }
+
   L.marker([target.lat, target.lng]).addTo(calcLayer);
   L.polyline([[store.lat, store.lng], [target.lat, target.lng]], { color: '#1a252f', weight: 8, opacity: 0.8, dashArray: '10, 10' }).addTo(calcLayer);
   
+  // 表示位置の調整
   const minDiff = 0.045; 
   const diffLat = Math.max(Math.abs(target.lat - store.lat), minDiff);
   const diffLng = Math.max(Math.abs(target.lng - store.lng), minDiff);
-  
   const zoomBounds = L.latLngBounds(
     [store.lat - diffLat, store.lng - diffLng],
     [store.lat + diffLat, store.lng + diffLng]
   );
   map.setView([store.lat, store.lng], map.getBoundsZoom(zoomBounds, false, [50, 50]));
 
-  const hStr = hour.toString().padStart(2, '0'), dStr = distClass.toString().padStart(2, '0');
   document.getElementById('res-dist').textContent = dStr;
   document.getElementById('res-hour').textContent = hStr;
   document.getElementById('res-detail').innerHTML = `${dist.toFixed(2)} km / ${Math.round(bearing)}°`;
