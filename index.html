@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>帰宅班マップ</title>
+  <title>帰宅班マップ (10km版・PlusCode対応)</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
   <style>
     * { box-sizing: border-box; }
@@ -15,35 +15,29 @@
       backdrop-filter: blur(8px); border: 2px solid #333;
     }
     #form-panel { top: 10px; left: 10px; width: 310px; padding: 15px; }
-    .panel-title { font-size: 16px; font-weight: 900; color: #ff0000; margin-bottom: 12px; border-left: 6px solid #ff0000; padding-left: 10px; }
+    .panel-title { font-size: 16px; font-weight: 900; color: #ff0000; margin-bottom: 5px; border-left: 6px solid #ff0000; padding-left: 10px; }
+    
+    .help-link { display: block; text-align: right; font-size: 11px; color: #ff0000; text-decoration: underline; cursor: pointer; margin-bottom: 8px; }
     
     .input-container { position: relative; margin-bottom: 10px; }
     input, select { width: 100%; padding: 12px; border: 2px solid #ccc; border-radius: 8px; font-size: 14px; font-weight: bold; }
-    select { margin-bottom: 10px; } 
-  
-    .clear-btn {
-      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
-      width: 24px; height: 24px; background: #999; color: white; border-radius: 50%;
-      text-align: center; line-height: 22px; cursor: pointer; font-size: 16px; font-weight: bold;
-      display: none; z-index: 5;
-    }
-    input:not(:placeholder-shown) + .clear-btn { display: block; }
-
-    #pac-input { border: 2px solid #ff0000; background: #fffbe6; padding-right: 40px; }
-    #inp-coords { padding-right: 40px; }
+    #inp-coords { border: 2px solid #ff0000; background: #fffbe6; }
     
-    #btn-calc { width: 100%; padding: 15px; background: #ff0000; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 900; font-size: 16px; box-shadow: 0 4px 0 #b30000; margin-top: 5px; }
+    #btn-calc { width: 100%; padding: 15px; background: #ff0000; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 900; font-size: 16px; box-shadow: 0 4px 0 #b30000; }
     #btn-calc:active { transform: translateY(2px); box-shadow: none; }
+
+    /* モーダル */
+    #modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 3000; display: none; align-items: center; justify-content: center; }
+    #modal-content { background: white; width: 90%; max-width: 380px; max-height: 85vh; border-radius: 15px; padding: 20px; overflow-y: auto; position: relative; }
+    .guide-img { width: 100%; border: 2px solid #ddd; border-radius: 8px; margin: 10px 0; }
+    .close-btn { background: #444; color: white; border: none; width: 100%; padding: 12px; border-radius: 8px; font-weight: bold; margin-top: 15px; }
+    .plus-code-ex { background: #eef2f7; padding: 8px; border-radius: 4px; font-family: monospace; font-size: 13px; border-left: 4px solid #3498db; }
+
     #result-panel { top: 10px; right: 10px; width: 310px; padding: 20px; background: #1a252f; color: white; display: none; text-align: center; border: 3px solid #f1c40f; }
     .res-val { font-size: 42px; font-weight: 900; color: #f1c40f; line-height: 1; font-family: 'Courier New', monospace; }
-    .dist-box-label { background: #ff0000 !important; color: #ffffff !important; border: 2px solid #ffffff; border-radius: 4px; font-weight: 900; font-size: 14px; width: 55px !important; height: 26px !important; line-height: 22px; text-align: center; box-shadow: 0 4px 8px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; }
-    .area-label-ultra { background: #000000; color: #ffffff; border: 2px solid #ffffff; border-radius: 50%; width: 40px !important; height: 40px !important; line-height: 36px; text-align: center; font-weight: 900; font-size: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-    #toast {
-      position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-      background: rgba(0,0,0,0.8); color: white; padding: 12px 24px;
-      border-radius: 50px; font-size: 14px; font-weight: bold; z-index: 2000;
-      display: none; opacity: 0; transition: opacity 0.3s;
-    }
+    .dist-box-label { background: #ff0000 !important; color: #ffffff !important; border: 2px solid #ffffff; border-radius: 4px; font-weight: 900; font-size: 14px; width: 55px !important; height: 26px !important; line-height: 22px; text-align: center; display: flex; align-items: center; justify-content: center; }
+    .area-label-ultra { background: #000000; color: #ffffff; border: 2px solid #ffffff; border-radius: 50%; width: 40px !important; height: 40px !important; line-height: 36px; text-align: center; font-weight: 900; font-size: 20px; }
+    #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 12px 24px; border-radius: 50px; font-size: 14px; font-weight: bold; z-index: 2000; display: none; opacity: 0; transition: opacity 0.3s; }
   </style>
 </head>
 <body>
@@ -51,20 +45,31 @@
 <div id="map"></div>
 
 <div id="form-panel" class="floating-panel">
-  <div class="panel-title">帰宅班マップ</div>
-  <select id="sel-store"></select>
-  
-  <div id="pac-container" class="input-container" style="display: none;">
-    <input id="pac-input" type="text" placeholder="住所・施設名を入力して選択">
-    <div class="clear-btn" onclick="clearInput('pac-input')">×</div>
-  </div>
-
+  <div class="panel-title">帰宅班マップ (10km)</div>
+  <span class="help-link" onclick="toggleModal(true)">📍 座標・Plus Codeの調べ方</span>
+  <select id="sel-store" style="margin-bottom: 10px;"></select>
   <div class="input-container">
-    <input type="text" id="inp-coords" placeholder="緯度, 経度">
-    <div class="clear-btn" onclick="clearInput('inp-coords')">×</div>
+    <input type="text" id="inp-coords" placeholder="座標 または Plus Code を入力">
   </div>
-  
   <button id="btn-calc">判定を実行</button>
+</div>
+
+<div id="modal-overlay" onclick="toggleModal(false)">
+  <div id="modal-content" onclick="event.stopPropagation()">
+    <h3 style="margin-top:0; color:#ff0000;">📍 座標の取得方法</h3>
+    <p style="font-size:13px;"><strong>【スマホ：Plus Code】</strong><br>1. Googleマップで場所を長押し<br>2. 下部の「住所」をタップして詳細を開く</p>
+    <div style="background:#eee; padding:10px; border-radius:8px; text-align:center;">
+       <span style="font-size:11px; color:#666;">詳細画面のここをコピー ↓</span>
+       <div class="plus-code-ex">QP25+3G 板橋区、東京都</div>
+    </div>
+    <p style="font-size:12px; color:#666; margin-top:5px;">※住所横のコードをタップしてコピーできます。</p>
+    
+    <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
+    
+    <p style="font-size:13px;"><strong>【PC：緯度経度】</strong><br>1. Googleマップ上を<strong>右クリック</strong><br>2. 一番上の数字をクリックでコピー完了</p>
+    
+    <button class="close-btn" onclick="toggleModal(false)">閉じる</button>
+  </div>
 </div>
 
 <div id="result-panel" class="floating-panel">
@@ -79,9 +84,9 @@
 <div id="toast">結果をコピーしました</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script>
-const GOOGLE_MAPS_API_KEY = "AIzaSyC-LKMRf8BWCC-of9cLBW-3ABhN3_F5Sw4"; 
+<script src="https://cdn.jsdelivr.net/npm/open-location-code@1.0.3/js/openlocationcode.min.js"></script>
 
+<script>
 const STORES = [
   { name: "やすだ大山４号店", lat: 35.7489573, lng: 139.7024786 },
   { name: "やすだ大山駅前５号店", lat: 35.7490262, lng: 139.702254 },
@@ -108,50 +113,21 @@ const STORES = [
 
 let map, guideLayer, calcLayer;
 
-function clearInput(id) {
-  const el = document.getElementById(id);
-  el.value = '';
-  el.focus();
-}
-
-function loadGoogleMaps() {
-  const script = document.createElement('script');
-  script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places&callback=init&loading=async`;
-  script.async = true;
-  document.head.appendChild(script);
-  document.getElementById('pac-container').style.display = 'block';
+function toggleModal(show) {
+  document.getElementById('modal-overlay').style.display = show ? 'flex' : 'none';
 }
 
 function init(){
   const selector = document.getElementById('sel-store');
-  selector.innerHTML = "";
   STORES.forEach((s, i) => { const o = document.createElement('option'); o.value = i; o.textContent = s.name; selector.appendChild(o); });
   
-  if (map) { map.remove(); }
   map = L.map('map', { zoomControl: false });
-  
-  if (GOOGLE_MAPS_API_KEY) {
-    L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}').addTo(map);
-    
-    if (typeof google !== 'undefined' && google.maps && google.maps.places) {
-      const autocomplete = new google.maps.places.Autocomplete(document.getElementById('pac-input'));
-      autocomplete.addListener('place_changed', function() {
-        const place = autocomplete.getPlace();
-        if (place.geometry) {
-          document.getElementById('inp-coords').value = `${place.geometry.location.lat()}, ${place.geometry.location.lng()}`;
-          calculate(); 
-        }
-      });
-    }
-  } else {
-    L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png').addTo(map);
-  }
+  L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', { attribution: "国土地理院" }).addTo(map);
   
   guideLayer = L.featureGroup().addTo(map);
   calcLayer = L.featureGroup().addTo(map);
   selector.onchange = updateView;
   document.getElementById('btn-calc').onclick = calculate;
-  document.getElementById('inp-coords').onkeypress = (e) => { if (e.key === 'Enter') calculate(); };
   updateView();
 }
 
@@ -163,19 +139,15 @@ function getDestPoint(lat, lng, dist, angle) {
 }
 
 function drawGuides(lat, lng) {
-  // 方角線と数字ラベルの描画
+  const radii = [5000, 10000];
   for (let i = 0; i < 12; i++) {
-    const end = getDestPoint(lat, lng, 20000, (i * 30 - 15));
-    L.polyline([[lat, lng], [end.lat, end.lng]], { color: '#ff0000', weight: 4, opacity: 0.3 }).addTo(guideLayer);
-    
-    const displayNum = (i === 0) ? "12" : i.toString().padStart(2, '0');
-    const numPos = getDestPoint(lat, lng, 12000, i * 30);
-    L.marker([numPos.lat, numPos.lng], { icon: L.divIcon({ className: 'area-label-ultra', html: displayNum }), interactive: false }).addTo(guideLayer);
+    const end = getDestPoint(lat, lng, 12000, (i * 30 - 15));
+    L.polyline([[lat, lng], [end.lat, end.lng]], { color: '#ff0000', weight: 4, opacity: 0.2 }).addTo(guideLayer);
+    const numPos = getDestPoint(lat, lng, 8000, i * 30);
+    L.marker([numPos.lat, numPos.lng], { icon: L.divIcon({ className: 'area-label-ultra', html: i.toString().padStart(2, '0') }), interactive: false }).addTo(guideLayer);
   }
-
-  // 同心円の描画（15km未満：5kmと10kmのみ）
-  [5000, 10000].forEach(r => {
-    L.circle([lat, lng], { radius: r, color: '#ff0000', weight: 5, fillOpacity: 0, opacity: 0.6 }).addTo(guideLayer);
+  radii.forEach(r => {
+    L.circle([lat, lng], { radius: r, color: '#ff0000', weight: 5, fillOpacity: 0, opacity: 0.5 }).addTo(guideLayer);
     const labelPos = getDestPoint(lat, lng, r, 225); 
     L.marker([labelPos.lat, labelPos.lng], { icon: L.divIcon({ className: 'dist-box-label', html: `<span>${r / 1000}km</span>` }), interactive: false }).addTo(guideLayer);
   });
@@ -187,80 +159,68 @@ function updateView() {
   document.getElementById('result-panel').style.display = 'none';
   drawGuides(store.lat, store.lng);
   L.marker([store.lat, store.lng]).addTo(guideLayer).bindPopup(`<strong>${store.name}</strong>`).openPopup();
-  map.setView([store.lat, store.lng], 12);
-}
-
-function showToast() {
-  const toast = document.getElementById('toast');
-  toast.style.display = 'block';
-  setTimeout(() => { toast.style.opacity = '1'; }, 10);
-  setTimeout(() => {
-    toast.style.opacity = '0';
-    setTimeout(() => { toast.style.display = 'none'; }, 300);
-  }, 2000);
+  map.setView([store.lat, store.lng], 13);
 }
 
 function calculate() {
   const store = STORES[document.getElementById('sel-store').value];
-  const input = document.getElementById('inp-coords').value.trim();
-  const match = input.match(/(-?\d+\.?\d*)\s*[,\s]\s*(-?\d+\.?\d*)/);
-  if (!match) { alert("有効な地点を選択または入力してください。"); return; }
-  const target = { lat: parseFloat(match[1]), lng: parseFloat(match[2]) };
+  let input = document.getElementById('inp-coords').value.trim();
+  let targetLat, targetLng;
+
+  // Plus Code 判定
+  if (input.includes('+')) {
+    try {
+      const code = input.split(' ')[0]; // 空白以降（地名など）を除去
+      const decoded = OpenLocationCode.decode(OpenLocationCode.recoverNearest(code, store.lat, store.lng));
+      targetLat = decoded.latitudeCenter;
+      targetLng = decoded.longitudeCenter;
+    } catch (e) { alert("Plus Codeを正しく読み取れませんでした。"); return; }
+  } else {
+    const match = input.match(/(-?\d+\.?\d*)\s*[,\s]\s*(-?\d+\.?\d*)/);
+    if (!match) { alert("有効な座標またはPlus Codeを入力してください。"); return; }
+    targetLat = parseFloat(match[1]);
+    targetLng = parseFloat(match[2]);
+  }
 
   const R = 6371;
-  const dLat = (target.lat - store.lat) * Math.PI / 180;
-  const dLon = (target.lng - store.lng) * Math.PI / 180;
-  const a = Math.sin(dLat / 2)**2 + Math.cos(store.lat * Math.PI / 180) * Math.cos(target.lat * Math.PI / 180) * Math.sin(dLon / 2)**2;
+  const dLat = (targetLat - store.lat) * Math.PI / 180;
+  const dLon = (targetLng - store.lng) * Math.PI / 180;
+  const a = Math.sin(dLat / 2)**2 + Math.cos(store.lat * Math.PI / 180) * Math.cos(targetLat * Math.PI / 180) * Math.sin(dLon / 2)**2;
   const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
   calcLayer.clearLayers();
+  let dStr = "00", hStr = "00";
 
-  const bearing = (Math.atan2(Math.sin(dLon) * Math.cos(target.lat * Math.PI / 180), Math.cos(store.lat * Math.PI / 180) * Math.sin(target.lat * Math.PI / 180) - Math.sin(store.lat * Math.PI / 180) * Math.cos(target.lat * Math.PI / 180) * Math.cos(dLon)) * 180 / Math.PI + 360) % 360;
-  
-  // 方角判定：00を12に変換
-  let hourVal = Math.floor(((bearing + 15) % 360) / 30);
-  const hStr = (hourVal === 0) ? "12" : hourVal.toString().padStart(2, '0');
-  
-  // 距離判定：15km超は00
-  let dStr = "00";
-  if (dist <= 15) {
+  // 10km以下の時のみ計算実行
+  if (dist <= 10.0) {
+    const bearing = (Math.atan2(Math.sin(dLon) * Math.cos(targetLat * Math.PI / 180), Math.cos(store.lat * Math.PI / 180) * Math.sin(targetLat * Math.PI / 180) - Math.sin(store.lat * Math.PI / 180) * Math.cos(targetLat * Math.PI / 180) * Math.cos(dLon)) * 180 / Math.PI + 360) % 360;
+    const hour = Math.floor(((bearing + 15) % 360) / 30);
     const distClass = Math.ceil(dist / 5) * 5;
     dStr = distClass.toString().padStart(2, '0');
-    
-    // 15km以内の場合のみ扇形ポリゴンを描画
+    hStr = hour.toString().padStart(2, '0');
+
+    // ハイライト描画
     const path = [];
-    const startA = hourVal * 30 - 15, endA = hourVal * 30 + 15;
-    for (let deg = startA; deg <= endA; deg += 2) path.push(getDestPoint(store.lat, store.lng, distClass * 1000, deg));
-    for (let deg = endA; deg >= startA; deg -= 2) path.push(getDestPoint(store.lat, store.lng, (distClass - 5) * 1000, deg));
+    for (let deg = hour * 30 - 15; deg <= hour * 30 + 15; deg += 2) path.push(getDestPoint(store.lat, store.lng, distClass * 1000, deg));
+    for (let deg = hour * 30 + 15; deg >= hour * 30 - 15; deg -= 2) path.push(getDestPoint(store.lat, store.lng, (distClass - 5) * 1000, deg));
     L.polygon(path.map(p => [p.lat, p.lng]), { color: '#ff0000', weight: 2, fillColor: '#ff0000', fillOpacity: 0.5 }).addTo(calcLayer);
   }
 
-  L.marker([target.lat, target.lng]).addTo(calcLayer);
-  L.polyline([[store.lat, store.lng], [target.lat, target.lng]], { color: '#1a252f', weight: 8, opacity: 0.8, dashArray: '10, 10' }).addTo(calcLayer);
-  
-  // 表示位置の調整
-  const minDiff = 0.045; 
-  const diffLat = Math.max(Math.abs(target.lat - store.lat), minDiff);
-  const diffLng = Math.max(Math.abs(target.lng - store.lng), minDiff);
-  const zoomBounds = L.latLngBounds(
-    [store.lat - diffLat, store.lng - diffLng],
-    [store.lat + diffLat, store.lng + diffLng]
-  );
-  map.setView([store.lat, store.lng], map.getBoundsZoom(zoomBounds, false, [50, 50]));
+  L.marker([targetLat, targetLng]).addTo(calcLayer);
+  L.polyline([[store.lat, store.lng], [targetLat, targetLng]], { color: '#1a252f', weight: 5, opacity: 0.6, dashArray: '5, 10' }).addTo(calcLayer);
+  map.fitBounds(L.latLngBounds([store.lat, store.lng], [targetLat, targetLng]), { padding: [50, 50] });
 
   document.getElementById('res-dist').textContent = dStr;
   document.getElementById('res-hour').textContent = hStr;
-  document.getElementById('res-detail').innerHTML = `${dist.toFixed(2)} km / ${Math.round(bearing)}°`;
+  document.getElementById('res-detail').innerHTML = `${dist.toFixed(2)} km`;
   document.getElementById('result-panel').style.display = 'block';
   
-  navigator.clipboard.writeText(`距離:${dStr} 方角:${hStr}`).then(showToast).catch(() => {});
+  navigator.clipboard.writeText(`距離:${dStr} 方角:${hStr}`).then(() => {
+    const t = document.getElementById('toast'); t.style.display = 'block'; t.style.opacity = '1';
+    setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.style.display='none', 300); }, 2000);
+  });
 }
-
-if (GOOGLE_MAPS_API_KEY) { 
-  loadGoogleMaps(); 
-} else { 
-  init(); 
-}
+init();
 </script>
 </body>
 </html>
