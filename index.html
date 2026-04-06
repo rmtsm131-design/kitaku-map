@@ -76,10 +76,24 @@
 
     .pac-container { z-index: 9999 !important; }
 
-    #result-panel { position: absolute; left: 10px; width: calc(100vw - 20px); max-width: 310px; padding: 20px; background: #1a252f; color: white; display: none; text-align: center; border: 3px solid #f1c40f; z-index: 1001; }
-    .res-val { font-size: 42px; font-weight: 900; color: #f1c40f; line-height: 1; font-family: 'Courier New', monospace; }
     .dist-box-label { background: #ff0000 !important; color: #ffffff !important; border: 2px solid #ffffff; border-radius: 4px; font-weight: 900; font-size: 14px; width: 55px !important; height: 26px !important; text-align: center; display: flex; align-items: center; justify-content: center; }
     .area-label-ultra { background: #000000; color: #ffffff; border: 2px solid #ffffff; border-radius: 50%; width: 40px !important; height: 40px !important; line-height: 36px; text-align: center; font-weight: 900; font-size: 20px; }
+
+    .gmap-dist-label {
+      background: #ff0000; color: #ffffff; border: 2px solid #ffffff;
+      border-radius: 4px; font-weight: 900; font-size: 14px;
+      padding: 2px 6px; font-family: 'Arial Black', sans-serif;
+      pointer-events: none; white-space: nowrap;
+    }
+    .gmap-hour-label {
+      background: #000000; color: #ffffff; border: 2px solid #ffffff;
+      border-radius: 50%; width: 36px; height: 36px; font-weight: 900; font-size: 18px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Arial Black', sans-serif; pointer-events: none;
+    }
+
+    #result-panel { position: absolute; left: 10px; width: calc(100vw - 20px); max-width: 310px; padding: 20px; background: #1a252f; color: white; display: none; text-align: center; border: 3px solid #f1c40f; z-index: 1001; }
+    .res-val { font-size: 42px; font-weight: 900; color: #f1c40f; line-height: 1; font-family: 'Courier New', monospace; }
 
     #bulk-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f0f2f5; z-index: 2000; flex-direction: column; }
     #bulk-header { background: #1a252f; color: white; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; border-bottom: 3px solid #ff0000; }
@@ -124,7 +138,7 @@
   <span class="step-label">① 店舗を選んでください</span>
   <select id="sel-store" style="margin-bottom: 10px;"></select>
   <hr class="step-divider">
-  <span class="step-label">② 住所コードを入力してください</span>
+  <span class="step-label" id="step2-label">② 住所コードを入力してください</span>
   <div class="input-wrapper">
     <input type="text" id="inp-coords" placeholder="例）35.7322, 139.7096" oninput="toggleClear()" autocomplete="off">
     <button class="clear-btn" id="btn-clear" onclick="clearInput()" aria-label="クリア">×</button>
@@ -374,10 +388,12 @@ function updateModeUI() {
   const hint = document.getElementById('input-hint-text');
   const bulkHeader = document.getElementById('bulk-col-header');
   const inp = document.getElementById('inp-coords');
+  const step2 = document.getElementById('step2-label');
 
   if (googleMode) {
     badge.textContent = 'Google';
     badge.className = 'google';
+    step2.textContent = '② 住所を入力してください';
     inp.placeholder = '住所を入力（予測変換あり）';
     hint.innerHTML = '🏠 住所を入力すると候補が表示されます';
     bulkHeader.textContent = '現在地（住所）';
@@ -386,6 +402,7 @@ function updateModeUI() {
   } else {
     badge.textContent = '地理院';
     badge.className = '';
+    step2.textContent = '② 住所コードを入力してください';
     inp.placeholder = '例）35.7322, 139.7096';
     hint.innerHTML = '📌 Plus Code例：<strong>QP25+3G 板橋区</strong><br>🗺 緯度経度例：<strong>35.7322, 139.7096</strong>';
     bulkHeader.textContent = '現在地（座標 / Plus Code）';
@@ -472,13 +489,9 @@ function updateView() {
   closeResult();
 
   if (googleMode && googleMap) {
-    // ガイド・計算結果・前の店舗ピンをすべてクリア
     clearGoogleLayers();
-
-    // ガイド線・サークル描画
     drawGoogleGuides(store.lat, store.lng);
 
-    // 店舗マーカー（guideObjectsに追加して切替時に消えるようにする）
     const storeMarker = new google.maps.Marker({
       position: { lat: store.lat, lng: store.lng },
       map: googleMap,
@@ -486,11 +499,9 @@ function updateView() {
     });
     googleGuideObjects.push(storeMarker);
 
-    // 店舗名ポップアップ（自動で開く）
     googleInfoWindow.setContent(`<strong>${store.name}</strong>`);
     googleInfoWindow.open(googleMap, storeMarker);
 
-    // マーカークリックでも開けるように
     storeMarker.addListener('click', () => {
       googleInfoWindow.setContent(`<strong>${store.name}</strong>`);
       googleInfoWindow.open(googleMap, storeMarker);
@@ -639,16 +650,23 @@ function drawLeafletArea(store, dClass, hour) {
 }
 
 function clearGoogleLayers() {
-  googleGuideObjects.forEach(o => o.setMap(null));
+  googleGuideObjects.forEach(o => {
+    if (o.setMap) o.setMap(null);
+    else if (o.parentNode) o.parentNode.removeChild(o);
+  });
   googleGuideObjects = [];
   clearGoogleCalc();
 }
 function clearGoogleCalc() {
-  googleCalcObjects.forEach(o => o.setMap(null));
+  googleCalcObjects.forEach(o => {
+    if (o.setMap) o.setMap(null);
+    else if (o.parentNode) o.parentNode.removeChild(o);
+  });
   googleCalcObjects = [];
 }
 
 function drawGoogleGuides(lat, lng) {
+  // 放射線
   for (let i = 1; i <= 12; i++) {
     const angle = i * 30;
     const end = getDestPoint(lat, lng, 12000, angle - 15);
@@ -657,7 +675,14 @@ function drawGoogleGuides(lat, lng) {
       strokeColor: '#ff0000', strokeOpacity: 0.2, strokeWeight: 3, map: googleMap
     });
     googleGuideObjects.push(line);
+
+    // 時計数字ラベル（OverlayView使用）
+    const numPos = getDestPoint(lat, lng, 8000, angle);
+    const hourLabel = createGoogleLabel(numPos.lat, numPos.lng, i.toString().padStart(2, '0'), 'gmap-hour-label');
+    googleGuideObjects.push(hourLabel);
   }
+
+  // 距離サークルとラベル
   [5000, 10000].forEach(r => {
     const circle = new google.maps.Circle({
       center: { lat, lng }, radius: r,
@@ -665,7 +690,49 @@ function drawGoogleGuides(lat, lng) {
       fillOpacity: 0, map: googleMap
     });
     googleGuideObjects.push(circle);
+
+    const labelPos = getDestPoint(lat, lng, r, 225);
+    const distLabel = createGoogleLabel(labelPos.lat, labelPos.lng, `${r/1000}km`, 'gmap-dist-label');
+    googleGuideObjects.push(distLabel);
   });
+}
+
+// Google Maps用カスタムオーバーレイラベル
+function createGoogleLabel(lat, lng, text, className) {
+  class CustomLabel extends google.maps.OverlayView {
+    constructor(lat, lng, text, className) {
+      super();
+      this.pos = new google.maps.LatLng(lat, lng);
+      this.text = text;
+      this.className = className;
+      this.div = null;
+    }
+    onAdd() {
+      const div = document.createElement('div');
+      div.className = this.className;
+      div.textContent = this.text;
+      div.style.position = 'absolute';
+      this.div = div;
+      this.getPanes().overlayLayer.appendChild(div);
+    }
+    draw() {
+      const point = this.getProjection().fromLatLngToDivPixel(this.pos);
+      if (point && this.div) {
+        this.div.style.left = (point.x - this.div.offsetWidth / 2) + 'px';
+        this.div.style.top = (point.y - this.div.offsetHeight / 2) + 'px';
+      }
+    }
+    onRemove() {
+      if (this.div && this.div.parentNode) {
+        this.div.parentNode.removeChild(this.div);
+        this.div = null;
+      }
+    }
+    setMap(map) { super.setMap(map); }
+  }
+  const label = new CustomLabel(lat, lng, text, className);
+  label.setMap(googleMap);
+  return label;
 }
 
 function drawGoogleArea(store, dClass, hour) {
