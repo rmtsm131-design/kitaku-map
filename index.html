@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>帰宅班マップ (10km版・PlusCode対応)</title>
+  <title>帰宅班マップ</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
   <style>
     * { box-sizing: border-box; }
@@ -16,23 +16,16 @@
     }
     #form-panel { top: 10px; left: 10px; width: 310px; padding: 15px; }
     .panel-title { font-size: 16px; font-weight: 900; color: #ff0000; margin-bottom: 5px; border-left: 6px solid #ff0000; padding-left: 10px; }
-    
     .help-link { display: block; text-align: right; font-size: 11px; color: #ff0000; text-decoration: underline; cursor: pointer; margin-bottom: 8px; }
-    
     .input-container { position: relative; margin-bottom: 10px; }
     input, select { width: 100%; padding: 12px; border: 2px solid #ccc; border-radius: 8px; font-size: 14px; font-weight: bold; }
     #inp-coords { border: 2px solid #ff0000; background: #fffbe6; }
-    
     #btn-calc { width: 100%; padding: 15px; background: #ff0000; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 900; font-size: 16px; box-shadow: 0 4px 0 #b30000; }
     #btn-calc:active { transform: translateY(2px); box-shadow: none; }
-
-    /* モーダル */
     #modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 3000; display: none; align-items: center; justify-content: center; }
     #modal-content { background: white; width: 90%; max-width: 380px; max-height: 85vh; border-radius: 15px; padding: 20px; overflow-y: auto; position: relative; }
-    .guide-img { width: 100%; border: 2px solid #ddd; border-radius: 8px; margin: 10px 0; }
     .close-btn { background: #444; color: white; border: none; width: 100%; padding: 12px; border-radius: 8px; font-weight: bold; margin-top: 15px; }
     .plus-code-ex { background: #eef2f7; padding: 8px; border-radius: 4px; font-family: monospace; font-size: 13px; border-left: 4px solid #3498db; }
-
     #result-panel { top: 10px; right: 10px; width: 310px; padding: 20px; background: #1a252f; color: white; display: none; text-align: center; border: 3px solid #f1c40f; }
     .res-val { font-size: 42px; font-weight: 900; color: #f1c40f; line-height: 1; font-family: 'Courier New', monospace; }
     .dist-box-label { background: #ff0000 !important; color: #ffffff !important; border: 2px solid #ffffff; border-radius: 4px; font-weight: 900; font-size: 14px; width: 55px !important; height: 26px !important; line-height: 22px; text-align: center; display: flex; align-items: center; justify-content: center; }
@@ -45,7 +38,7 @@
 <div id="map"></div>
 
 <div id="form-panel" class="floating-panel">
-  <div class="panel-title">帰宅班マップ (10km)</div>
+  <div class="panel-title">帰宅班マップ</div>
   <span class="help-link" onclick="toggleModal(true)">📍 座標・Plus Codeの調べ方</span>
   <select id="sel-store" style="margin-bottom: 10px;"></select>
   <div class="input-container">
@@ -57,17 +50,11 @@
 <div id="modal-overlay" onclick="toggleModal(false)">
   <div id="modal-content" onclick="event.stopPropagation()">
     <h3 style="margin-top:0; color:#ff0000;">📍 座標の取得方法</h3>
-    <p style="font-size:13px;"><strong>【スマホ：Plus Code】</strong><br>1. Googleマップで場所を長押し<br>2. 下部の「住所」をタップして詳細を開く</p>
+    <p style="font-size:13px;"><strong>【スマホ：Plus Code】</strong><br>1. Googleマップで場所を長押し<br>2. 下部の住所をタップして詳細を開く</p>
     <div style="background:#eee; padding:10px; border-radius:8px; text-align:center;">
        <span style="font-size:11px; color:#666;">詳細画面のここをコピー ↓</span>
        <div class="plus-code-ex">QP25+3G 板橋区、東京都</div>
     </div>
-    <p style="font-size:12px; color:#666; margin-top:5px;">※住所横のコードをタップしてコピーできます。</p>
-    
-    <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
-    
-    <p style="font-size:13px;"><strong>【PC：緯度経度】</strong><br>1. Googleマップ上を<strong>右クリック</strong><br>2. 一番上の数字をクリックでコピー完了</p>
-    
     <button class="close-btn" onclick="toggleModal(false)">閉じる</button>
   </div>
 </div>
@@ -120,10 +107,8 @@ function toggleModal(show) {
 function init(){
   const selector = document.getElementById('sel-store');
   STORES.forEach((s, i) => { const o = document.createElement('option'); o.value = i; o.textContent = s.name; selector.appendChild(o); });
-  
   map = L.map('map', { zoomControl: false });
   L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', { attribution: "国土地理院" }).addTo(map);
-  
   guideLayer = L.featureGroup().addTo(map);
   calcLayer = L.featureGroup().addTo(map);
   selector.onchange = updateView;
@@ -167,11 +152,11 @@ function calculate() {
   let input = document.getElementById('inp-coords').value.trim();
   let targetLat, targetLng;
 
-  // Plus Code 判定
   if (input.includes('+')) {
     try {
-      const code = input.split(' ')[0]; // 空白以降（地名など）を除去
-      const decoded = OpenLocationCode.decode(OpenLocationCode.recoverNearest(code, store.lat, store.lng));
+      const cleanCode = input.split(/[\s,、]/)[0]; 
+      let fullCode = OpenLocationCode.isFull(cleanCode) ? cleanCode : OpenLocationCode.recoverNearest(cleanCode, store.lat, store.lng);
+      const decoded = OpenLocationCode.decode(fullCode);
       targetLat = decoded.latitudeCenter;
       targetLng = decoded.longitudeCenter;
     } catch (e) { alert("Plus Codeを正しく読み取れませんでした。"); return; }
@@ -191,7 +176,6 @@ function calculate() {
   calcLayer.clearLayers();
   let dStr = "00", hStr = "00";
 
-  // 10km以下の時のみ計算実行
   if (dist <= 10.0) {
     const bearing = (Math.atan2(Math.sin(dLon) * Math.cos(targetLat * Math.PI / 180), Math.cos(store.lat * Math.PI / 180) * Math.sin(targetLat * Math.PI / 180) - Math.sin(store.lat * Math.PI / 180) * Math.cos(targetLat * Math.PI / 180) * Math.cos(dLon)) * 180 / Math.PI + 360) % 360;
     const hour = Math.floor(((bearing + 15) % 360) / 30);
@@ -199,7 +183,6 @@ function calculate() {
     dStr = distClass.toString().padStart(2, '0');
     hStr = hour.toString().padStart(2, '0');
 
-    // ハイライト描画
     const path = [];
     for (let deg = hour * 30 - 15; deg <= hour * 30 + 15; deg += 2) path.push(getDestPoint(store.lat, store.lng, distClass * 1000, deg));
     for (let deg = hour * 30 + 15; deg >= hour * 30 - 15; deg -= 2) path.push(getDestPoint(store.lat, store.lng, (distClass - 5) * 1000, deg));
