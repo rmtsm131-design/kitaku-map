@@ -20,7 +20,16 @@
     .help-link { display: block; text-align: right; font-size: 11px; color: #ff0000; text-decoration: underline; cursor: pointer; margin-bottom: 8px; }
     .step-label { font-size: 11px; font-weight: 900; color: #fff; background: #ff0000; display: inline-block; padding: 2px 7px; border-radius: 10px; margin-bottom: 5px; }
     .input-hint { font-size: 10px; color: #888; margin: 3px 0 6px 2px; line-height: 1.5; }
-    .input-container { position: relative; margin-bottom: 4px; }
+    .input-wrapper { position: relative; margin-bottom: 4px; }
+    .input-wrapper input { padding-right: 44px; }
+    .clear-btn {
+      position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+      width: 32px; height: 32px; border-radius: 50%; background: #ccc; border: none;
+      color: #fff; font-size: 18px; font-weight: 900; cursor: pointer;
+      display: none; align-items: center; justify-content: center; line-height: 1;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .clear-btn:active { background: #999; }
     input, select { width: 100%; padding: 12px; border: 2px solid #ccc; border-radius: 8px; font-size: 14px; font-weight: bold; }
     #inp-coords { border: 2px solid #ff0000; background: #fffbe6; }
     #btn-calc { width: 100%; padding: 15px; background: #ff0000; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 900; font-size: 16px; box-shadow: 0 4px 0 #b30000; }
@@ -51,8 +60,9 @@
   <hr class="step-divider">
 
   <span class="step-label">② 現在地を入力してください</span>
-  <div class="input-container">
-    <input type="text" id="inp-coords" placeholder="例）35.7322, 139.7096">
+  <div class="input-wrapper">
+    <input type="text" id="inp-coords" placeholder="例）35.7322, 139.7096" oninput="toggleClear()">
+    <button class="clear-btn" id="btn-clear" onclick="clearInput()" aria-label="クリア">×</button>
   </div>
   <div class="input-hint">
     📌 Plus Code例：<strong>QP25+3G 板橋区</strong><br>
@@ -61,8 +71,7 @@
 
   <hr class="step-divider">
 
-  <span class="step-label">③ 判定を実行</span>
-  <button id="btn-calc" style="margin-top: 6px;">判定を実行</button>
+  <button id="btn-calc">③ 判定を実行</button>
 </div>
 
 <div id="modal-overlay" onclick="toggleModal(false)">
@@ -120,6 +129,19 @@ const STORES = [
 
 let map, guideLayer, calcLayer;
 function toggleModal(show) { document.getElementById('modal-overlay').style.display = show ? 'flex' : 'none'; }
+
+function toggleClear() {
+  const inp = document.getElementById('inp-coords');
+  const btn = document.getElementById('btn-clear');
+  btn.style.display = inp.value.length > 0 ? 'flex' : 'none';
+}
+
+function clearInput() {
+  const inp = document.getElementById('inp-coords');
+  inp.value = '';
+  document.getElementById('btn-clear').style.display = 'none';
+  inp.focus();
+}
 
 function init() {
   const selector = document.getElementById('sel-store');
