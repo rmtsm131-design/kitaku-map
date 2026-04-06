@@ -28,7 +28,7 @@
       width: 32px; height: 32px; border-radius: 50%; background: #ccc; border: none;
       color: #fff; font-size: 18px; font-weight: 900; cursor: pointer;
       display: none; align-items: center; justify-content: center; line-height: 1;
-      -webkit-tap-highlight-color: transparent;
+      -webkit-tap-highlight-color: transparent; z-index: 2;
     }
     .clear-btn:active { background: #999; }
     input, select { width: 100%; padding: 12px; border: 2px solid #ccc; border-radius: 8px; font-size: 14px; font-weight: bold; }
@@ -61,7 +61,6 @@
     .close-btn { background: #444; color: white; border: none; width: 100%; padding: 12px; border-radius: 8px; font-weight: bold; margin-top: 15px; cursor: pointer; }
     .plus-code-ex { background: #eef2f7; padding: 8px; border-radius: 4px; font-family: monospace; font-size: 13px; border-left: 4px solid #3498db; }
 
-    /* 設定モーダル */
     #key-saved-view { display: none; background: #f0fff4; border: 2px solid #27ae60; border-radius: 8px; padding: 12px 14px; margin: 10px 0; }
     #key-saved-view .key-mask { font-family: monospace; font-size: 16px; color: #1a252f; letter-spacing: 2px; display: block; margin-bottom: 6px; }
     #key-saved-view .key-saved-label { font-size: 11px; color: #27ae60; font-weight: bold; }
@@ -74,6 +73,9 @@
     .settings-status.ok { color: #27ae60; font-weight: bold; }
     .settings-status.err { color: #e74c3c; font-weight: bold; }
     .api-note { font-size: 11px; color: #888; line-height: 1.7; margin-top: 10px; background: #f8f8f8; padding: 10px; border-radius: 8px; }
+
+    /* Autocomplete ドロップダウンのz-index調整 */
+    .pac-container { z-index: 9999 !important; }
 
     #result-panel { position: absolute; left: 10px; width: calc(100vw - 20px); max-width: 310px; padding: 20px; background: #1a252f; color: white; display: none; text-align: center; border: 3px solid #f1c40f; z-index: 1001; }
     .res-val { font-size: 42px; font-weight: 900; color: #f1c40f; line-height: 1; font-family: 'Courier New', monospace; }
@@ -129,7 +131,7 @@
 
   <span class="step-label">② 現在地を入力してください</span>
   <div class="input-wrapper">
-    <input type="text" id="inp-coords" placeholder="例）35.7322, 139.7096" oninput="toggleClear()">
+    <input type="text" id="inp-coords" placeholder="例）35.7322, 139.7096" oninput="toggleClear()" autocomplete="off">
     <button class="clear-btn" id="btn-clear" onclick="clearInput()" aria-label="クリア">×</button>
   </div>
   <div class="input-hint" id="input-hint-text">
@@ -157,7 +159,7 @@
       <p style="font-size:13px;"><strong>【PC：緯度経度】</strong><br>1. Googleマップ上を<strong>右クリック</strong><br>2. 一番上の数字をクリックしてコピー完了</p>
     </div>
     <div id="modal-body-address" style="display:none;">
-      <p style="font-size:13px;">住所を入力してください。番地まで入力するほど精度が上がります。</p>
+      <p style="font-size:13px;">住所を入力すると候補が表示されます。候補から選択してください。</p>
       <div style="background:#eee; padding:10px; border-radius:8px;">
         <div class="plus-code-ex">東京都板橋区大山町1-1</div>
       </div>
@@ -171,15 +173,13 @@
   <div class="modal-content" onclick="event.stopPropagation()">
     <h3 style="margin-top:0; color:#1a252f;">⚙️ 設定</h3>
     <p style="font-size:13px; font-weight:bold; margin-bottom:4px;">Google Maps APIキー</p>
-    <p style="font-size:12px; color:#555; margin-top:0;">APIキーを入力・適用すると、地図がGoogleマップに切り替わり、住所入力で判定できるようになります。未入力の場合は国土地理院マップ＋座標入力で動作します。</p>
+    <p style="font-size:12px; color:#555; margin-top:0;">APIキーを入力・適用すると、地図がGoogleマップに切り替わり、住所の予測変換付きで判定できるようになります。未入力の場合は国土地理院マップ＋座標入力で動作します。</p>
 
-    <!-- 保存済み表示 -->
     <div id="key-saved-view">
       <span class="key-saved-label">✅ APIキー登録済み</span>
       <span class="key-mask">●●●●●●●●●●●●●●●●</span>
     </div>
 
-    <!-- 未登録時の入力欄 -->
     <div id="key-input-view">
       <input type="password" id="inp-apikey" placeholder="AIza..." autocomplete="off" style="margin: 10px 0;">
       <button id="btn-apply-key" onclick="applyApiKey()">✅ 適用してGoogleモードに切替</button>
@@ -190,7 +190,7 @@
 
     <div class="api-note">
       💡 <strong>APIキーの取得方法：</strong><br>
-      Google Cloud Console → 「Maps JavaScript API」と「Geocoding API」を有効化してキーを発行してください。<br><br>
+      Google Cloud Console → 「Maps JavaScript API」「Geocoding API」「Places API」を有効化してキーを発行してください。<br><br>
       🔒 <strong>セキュリティ：</strong><br>
       キーはこのデバイスのブラウザ内にのみ保存されます。外部サーバーには送信されません。Google Cloud側でHTTPリファラ制限をかけることを推奨します。
     </div>
@@ -269,6 +269,8 @@ let googleMap = null;
 let guideLayer, calcLayer;
 let googleGuideObjects = [];
 let googleCalcObjects = [];
+let autocomplete = null;
+let selectedPlace = null; // Autocompleteで選択されたplace
 const STORAGE_KEY = 'kikitaihan_gmaps_key';
 
 function init() {
@@ -292,6 +294,8 @@ function init() {
 
 function initLeafletMode() {
   googleMode = false;
+  autocomplete = null;
+  selectedPlace = null;
   updateModeUI();
 
   if (googleMap) {
@@ -318,10 +322,10 @@ function initGoogleMode() {
 
   if (!window.google || !window.google.maps) {
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${googleApiKey}&language=ja&callback=onGoogleMapsReady`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${googleApiKey}&libraries=places&language=ja&callback=onGoogleMapsReady`;
     script.async = true;
     script.onerror = () => {
-      showSettingsStatus('APIキーが無効か、Maps JavaScript APIが有効化されていません。', 'err');
+      showSettingsStatus('APIキーが無効か、APIが有効化されていません。', 'err');
       initLeafletMode();
     };
     document.head.appendChild(script);
@@ -342,9 +346,39 @@ window.onGoogleMapsReady = function() {
     zoomControl: false,
   });
 
+  // Autocomplete初期化
+  initAutocomplete();
+
   updateView();
   resetBulk();
 };
+
+function initAutocomplete() {
+  const input = document.getElementById('inp-coords');
+  autocomplete = new google.maps.places.Autocomplete(input, {
+    componentRestrictions: { country: 'jp' },
+    fields: ['geometry', 'formatted_address'],
+    types: ['geocode', 'establishment'],
+  });
+  autocomplete.addListener('place_changed', () => {
+    const place = autocomplete.getPlace();
+    if (place && place.geometry) {
+      selectedPlace = {
+        lat: place.geometry.location.lat(),
+        lng: place.geometry.location.lng(),
+        formatted: place.formatted_address
+      };
+      document.getElementById('btn-clear').style.display = 'flex';
+    } else {
+      selectedPlace = null;
+    }
+  });
+  // 入力変更時はselectedPlaceをリセット
+  input.addEventListener('input', () => {
+    selectedPlace = null;
+    toggleClear();
+  });
+}
 
 function updateModeUI() {
   const badge = document.getElementById('mode-badge');
@@ -355,8 +389,8 @@ function updateModeUI() {
   if (googleMode) {
     badge.textContent = 'Google';
     badge.className = 'google';
-    inp.placeholder = '例）東京都板橋区大山町1-1';
-    hint.innerHTML = '🏠 住所を番地まで入力してください';
+    inp.placeholder = '住所を入力（予測変換あり）';
+    hint.innerHTML = '🏠 住所を入力すると候補が表示されます';
     bulkHeader.textContent = '現在地（住所）';
     document.getElementById('modal-body-coords').style.display = 'none';
     document.getElementById('modal-body-address').style.display = 'block';
@@ -436,6 +470,7 @@ function toggleClear() {
 function clearInput() {
   document.getElementById('inp-coords').value = '';
   document.getElementById('btn-clear').style.display = 'none';
+  selectedPlace = null;
   document.getElementById('inp-coords').focus();
 }
 function showResult() {
@@ -476,10 +511,17 @@ async function calculate() {
     document.getElementById('btn-calc').textContent = '検索中…';
     document.getElementById('btn-calc').disabled = true;
     try {
-      const result = await geocode(input);
-      if (!result) { alert('住所が見つかりませんでした。入力を確認してください。'); return; }
-      targetLat = result.lat; targetLng = result.lng;
-      detailText = result.formatted;
+      // Autocompleteで選択済みならそのまま使う、未選択ならGeocoding APIにフォールバック
+      if (selectedPlace) {
+        targetLat = selectedPlace.lat;
+        targetLng = selectedPlace.lng;
+        detailText = selectedPlace.formatted;
+      } else {
+        const result = await geocode(input);
+        if (!result) { alert('住所が見つかりませんでした。入力を確認してください。'); return; }
+        targetLat = result.lat; targetLng = result.lng;
+        detailText = result.formatted;
+      }
     } catch(e) {
       alert('住所の検索に失敗しました。APIキーを確認してください。');
       return;
@@ -639,7 +681,7 @@ function addBulkRow(name) {
     <td><select class="bulk-store-select"><option value="">店舗を選択</option>${storeOptions}</select></td>
     <td>
       <div class="bulk-coord-wrap">
-        <input class="bulk-coord-input" type="text" placeholder="${placeholder}">
+        <input class="bulk-coord-input" type="text" placeholder="${placeholder}" autocomplete="off">
         <button class="bulk-clear-btn" onclick="clearBulkCoord(this)">×</button>
       </div>
     </td>
@@ -653,12 +695,39 @@ function addBulkRow(name) {
     clearBtn.style.display = coordInput.value.length > 0 ? 'flex' : 'none';
   });
   tr.querySelector('.bulk-name-input').addEventListener('paste', handleNamePaste);
+
+  // Googleモードなら一括行にもAutocomplete付与
+  if (googleMode && window.google && window.google.maps) {
+    const ac = new google.maps.places.Autocomplete(coordInput, {
+      componentRestrictions: { country: 'jp' },
+      fields: ['geometry', 'formatted_address'],
+      types: ['geocode', 'establishment'],
+    });
+    ac.addListener('place_changed', () => {
+      const place = ac.getPlace();
+      if (place && place.geometry) {
+        coordInput._selectedPlace = {
+          lat: place.geometry.location.lat(),
+          lng: place.geometry.location.lng(),
+          formatted: place.formatted_address
+        };
+        clearBtn.style.display = 'flex';
+      }
+    });
+    coordInput.addEventListener('input', () => {
+      coordInput._selectedPlace = null;
+    });
+  }
+
   tbody.appendChild(tr);
 }
 
 function clearBulkCoord(btn) {
   const input = btn.previousElementSibling;
-  input.value = ''; btn.style.display = 'none'; input.focus();
+  input.value = '';
+  input._selectedPlace = null;
+  btn.style.display = 'none';
+  input.focus();
 }
 
 function handleNamePaste(e) {
@@ -690,7 +759,8 @@ async function runAll() {
 
   for (const tr of rows) {
     const storeIdx = tr.querySelector('.bulk-store-select').value;
-    const coordVal = tr.querySelector('.bulk-coord-input').value.trim();
+    const coordInput = tr.querySelector('.bulk-coord-input');
+    const coordVal = coordInput.value.trim();
     const distEl = tr.querySelector('.bulk-result-dist');
     const hourEl = tr.querySelector('.bulk-result-hour');
     if (!storeIdx || !coordVal) continue;
@@ -698,11 +768,18 @@ async function runAll() {
     try {
       let result;
       if (googleMode) {
-        const geo = await geocode(coordVal);
-        if (geo) {
-          const r = calcResult(STORES[storeIdx], geo.lat, geo.lng);
-          result = { dist: r.dStr, hour: r.hStr };
+        let lat, lng, formatted;
+        if (coordInput._selectedPlace) {
+          lat = coordInput._selectedPlace.lat;
+          lng = coordInput._selectedPlace.lng;
+          formatted = coordInput._selectedPlace.formatted;
+        } else {
+          const geo = await geocode(coordVal);
+          if (!geo) throw new Error('not found');
+          lat = geo.lat; lng = geo.lng;
         }
+        const r = calcResult(STORES[storeIdx], lat, lng);
+        result = { dist: r.dStr, hour: r.hStr };
       } else {
         let targetLat, targetLng;
         if (coordVal.includes('+')) {
@@ -731,6 +808,7 @@ async function runAll() {
       }
     } catch {
       distEl.textContent = 'ERR'; hourEl.textContent = 'ERR';
+      distEl.classList.remove('filled'); hourEl.classList.remove('filled');
     }
   }
 
