@@ -10,6 +10,7 @@
     * { box-sizing: border-box; }
     body { margin: 0; padding: 0; font-family: 'Arial Black', sans-serif; overflow: hidden; background: #f0f2f5; }
     #map { width: 100vw; height: 100vh; z-index: 1; }
+
     .floating-panel {
       position: absolute; z-index: 1000; background: rgba(255,255,255,0.98);
       border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.25);
@@ -38,16 +39,54 @@
     .bulk-link:hover { color: #666; }
     .step-divider { border: none; border-top: 1px dashed #ddd; margin: 10px 0; }
 
+    /* モードバッジ */
+    #mode-badge {
+      display: inline-block; font-size: 10px; font-weight: 900;
+      padding: 2px 7px; border-radius: 10px; margin-left: 6px;
+      background: #e0e0e0; color: #666; vertical-align: middle;
+    }
+    #mode-badge.google { background: #e8f5e9; color: #2e7d32; }
+
+    /* 歯車ボタン */
+    #btn-settings {
+      position: absolute; top: 10px; right: 10px; z-index: 1001;
+      width: 44px; height: 44px; border-radius: 50%;
+      background: rgba(255,255,255,0.95); border: 2px solid #333;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-size: 20px; -webkit-tap-highlight-color: transparent;
+    }
+    #btn-settings:active { background: #eee; }
+
+    /* モーダル共通 */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 3000; display: none; align-items: center; justify-content: center; }
     .modal-content { background: white; width: 90%; max-width: 380px; max-height: 85vh; border-radius: 15px; padding: 20px; overflow-y: auto; position: relative; }
     .close-btn { background: #444; color: white; border: none; width: 100%; padding: 12px; border-radius: 8px; font-weight: bold; margin-top: 15px; cursor: pointer; }
     .plus-code-ex { background: #eef2f7; padding: 8px; border-radius: 4px; font-family: monospace; font-size: 13px; border-left: 4px solid #3498db; }
 
+    /* 設定モーダル */
+    #settings-modal .api-input-wrap { position: relative; margin: 10px 0; }
+    #inp-apikey { font-family: monospace; font-size: 13px; padding-right: 44px; border: 2px solid #ccc; }
+    #inp-apikey.valid { border-color: #27ae60; background: #f0fff4; }
+    #btn-toggle-key {
+      position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; font-size: 18px; color: #999; padding: 4px;
+    }
+    #btn-apply-key { width: 100%; padding: 13px; background: #1a252f; color: #f1c40f; border: none; border-radius: 8px; font-weight: 900; font-size: 15px; cursor: pointer; margin-top: 6px; }
+    #btn-apply-key:active { opacity: 0.8; }
+    #btn-clear-key { width: 100%; padding: 10px; background: #eee; color: #666; border: none; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; margin-top: 6px; }
+    .settings-status { font-size: 12px; margin-top: 8px; text-align: center; min-height: 18px; }
+    .settings-status.ok { color: #27ae60; font-weight: bold; }
+    .settings-status.err { color: #e74c3c; font-weight: bold; }
+    .api-note { font-size: 11px; color: #888; line-height: 1.7; margin-top: 10px; background: #f8f8f8; padding: 10px; border-radius: 8px; }
+
+    /* 結果パネル */
     #result-panel { position: absolute; left: 10px; width: calc(100vw - 20px); max-width: 310px; padding: 20px; background: #1a252f; color: white; display: none; text-align: center; border: 3px solid #f1c40f; z-index: 1001; }
     .res-val { font-size: 42px; font-weight: 900; color: #f1c40f; line-height: 1; font-family: 'Courier New', monospace; }
-    .dist-box-label { background: #ff0000 !important; color: #ffffff !important; border: 2px solid #ffffff; border-radius: 4px; font-weight: 900; font-size: 14px; width: 55px !important; height: 26px !important; line-height: 22px; text-align: center; display: flex; align-items: center; justify-content: center; }
+    .dist-box-label { background: #ff0000 !important; color: #ffffff !important; border: 2px solid #ffffff; border-radius: 4px; font-weight: 900; font-size: 14px; width: 55px !important; height: 26px !important; text-align: center; display: flex; align-items: center; justify-content: center; }
     .area-label-ultra { background: #000000; color: #ffffff; border: 2px solid #ffffff; border-radius: 50%; width: 40px !important; height: 40px !important; line-height: 36px; text-align: center; font-weight: 900; font-size: 20px; }
 
+    /* 一括入力 */
     #bulk-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f0f2f5; z-index: 2000; flex-direction: column; }
     #bulk-header { background: #1a252f; color: white; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; border-bottom: 3px solid #ff0000; }
     #bulk-header .bulk-title { font-size: 16px; font-weight: 900; color: #f1c40f; }
@@ -81,11 +120,16 @@
 
 <div id="map"></div>
 
+<!-- 歯車ボタン -->
+<button id="btn-settings" onclick="openSettings()">⚙️</button>
+
+<!-- メインパネル -->
 <div id="form-panel" class="floating-panel">
-  <div style="margin-bottom:5px;">
+  <div style="margin-bottom:5px; display:flex; align-items:center;">
     <div class="panel-title">帰宅班マップ</div>
+    <span id="mode-badge">地理院</span>
   </div>
-  <span class="help-link" onclick="toggleModal(true)">📍 座標・Plus Codeの調べ方</span>
+  <span class="help-link" onclick="toggleModal(true)">📍 入力方法を見る</span>
 
   <span class="step-label">① 店舗を選んでください</span>
   <select id="sel-store" style="margin-bottom: 10px;"></select>
@@ -97,7 +141,7 @@
     <input type="text" id="inp-coords" placeholder="例）35.7322, 139.7096" oninput="toggleClear()">
     <button class="clear-btn" id="btn-clear" onclick="clearInput()" aria-label="クリア">×</button>
   </div>
-  <div class="input-hint">
+  <div class="input-hint" id="input-hint-text">
     📌 Plus Code例：<strong>QP25+3G 板橋区</strong><br>
     🗺 緯度経度例：<strong>35.7322, 139.7096</strong>
   </div>
@@ -108,21 +152,61 @@
   <a class="bulk-link" onclick="openBulkScreen()">一括入力モード →</a>
 </div>
 
+<!-- 入力説明モーダル -->
 <div id="modal-overlay" class="modal-overlay" onclick="toggleModal(false)">
   <div class="modal-content" onclick="event.stopPropagation()">
-    <h3 style="margin-top:0; color:#ff0000;">📍 座標の取得方法</h3>
-    <p style="font-size:13px;"><strong>【スマホ：Plus Code】</strong><br>1. Googleマップで場所を<strong>長押し</strong><br>2. 下部の住所をタップして詳細を開く</p>
-    <div style="background:#eee; padding:10px; border-radius:8px; text-align:center;">
-      <span style="font-size:11px; color:#666;">詳細画面のここをコピー ↓</span>
-      <div class="plus-code-ex">QP25+3G 板橋区、東京都</div>
+    <h3 style="margin-top:0; color:#ff0000;" id="modal-title">📍 座標の取得方法</h3>
+    <div id="modal-body-coords">
+      <p style="font-size:13px;"><strong>【スマホ：Plus Code】</strong><br>1. Googleマップで場所を<strong>長押し</strong><br>2. 下部の住所をタップして詳細を開く</p>
+      <div style="background:#eee; padding:10px; border-radius:8px; text-align:center;">
+        <span style="font-size:11px; color:#666;">詳細画面のここをコピー ↓</span>
+        <div class="plus-code-ex">QP25+3G 板橋区、東京都</div>
+      </div>
+      <p style="font-size:12px; color:#666; margin-top:10px;">※コードをタップするだけでコピー可能です。</p>
+      <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
+      <p style="font-size:13px;"><strong>【PC：緯度経度】</strong><br>1. Googleマップ上を<strong>右クリック</strong><br>2. 一番上の数字をクリックしてコピー完了</p>
     </div>
-    <p style="font-size:12px; color:#666; margin-top:10px;">※コードをタップするだけでコピー可能です。</p>
-    <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
-    <p style="font-size:13px;"><strong>【PC：緯度経度】</strong><br>1. Googleマップ上を<strong>右クリック</strong><br>2. 一番上の数字をクリックしてコピー完了</p>
+    <div id="modal-body-address" style="display:none;">
+      <p style="font-size:13px;">住所を入力してください。番地まで入力するほど精度が上がります。</p>
+      <div style="background:#eee; padding:10px; border-radius:8px;">
+        <div class="plus-code-ex">東京都板橋区大山町1-1</div>
+      </div>
+      <p style="font-size:12px; color:#666; margin-top:10px;">※建物名・部屋番号は不要です。</p>
+    </div>
     <button class="close-btn" onclick="toggleModal(false)">閉じる</button>
   </div>
 </div>
 
+<!-- 設定モーダル -->
+<div id="settings-modal" class="modal-overlay" onclick="closeSettings()">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <h3 style="margin-top:0; color:#1a252f;">⚙️ 設定</h3>
+
+    <p style="font-size:13px; font-weight:bold; margin-bottom:4px;">Google Maps APIキー</p>
+    <p style="font-size:12px; color:#555; margin-top:0;">
+      APIキーを入力・適用すると、地図がGoogleマップに切り替わり、住所入力で判定できるようになります。未入力の場合は国土地理院マップ＋座標入力で動作します。
+    </p>
+
+    <div class="api-input-wrap">
+      <input type="password" id="inp-apikey" placeholder="AIza..." autocomplete="off">
+      <button id="btn-toggle-key" onclick="toggleKeyVisibility()" title="表示切替">👁</button>
+    </div>
+    <button id="btn-apply-key" onclick="applyApiKey()">✅ 適用してGoogleモードに切替</button>
+    <button id="btn-clear-key" onclick="clearApiKey()">🗑 キーを削除して地理院モードに戻す</button>
+    <div class="settings-status" id="settings-status"></div>
+
+    <div class="api-note">
+      💡 <strong>APIキーの取得方法：</strong><br>
+      Google Cloud Console → 「Maps JavaScript API」と「Geocoding API」を有効化してキーを発行してください。<br><br>
+      🔒 <strong>セキュリティ：</strong><br>
+      キーはこのデバイスのブラウザ内にのみ保存されます。外部サーバーには送信されません。Google Cloud側でHTTPリファラ制限をかけることを推奨します。
+    </div>
+
+    <button class="close-btn" onclick="closeSettings()">閉じる</button>
+  </div>
+</div>
+
+<!-- 結果パネル -->
 <div id="result-panel" class="floating-panel">
   <div style="display: flex; justify-content: space-around; align-items: center; margin-bottom: 10px;">
     <div><span style="font-size:12px; color:#f1c40f; display:block;">距離</span><span id="res-dist" class="res-val">--</span></div>
@@ -132,6 +216,7 @@
   <button onclick="closeResult()" style="width:100%; padding:8px; background:#444; border:none; color:white; border-radius:4px; cursor:pointer; font-weight:bold;">閉じる</button>
 </div>
 
+<!-- 一括入力画面 -->
 <div id="bulk-screen">
   <div id="bulk-header">
     <span class="bulk-title">一括入力モード</span>
@@ -150,7 +235,7 @@
         <tr>
           <th style="width:120px;">氏名</th>
           <th style="width:200px;">店舗</th>
-          <th>現在地（座標 / Plus Code）</th>
+          <th id="bulk-col-header">現在地（座標 / Plus Code）</th>
           <th style="width:60px; text-align:center;">距離</th>
           <th style="width:60px; text-align:center;">方角</th>
           <th style="width:36px;"></th>
@@ -187,44 +272,436 @@ const STORES = [
   { name: "やすだ大和店", lat: 35.4960645, lng: 139.4647883 }
 ];
 
-let map, guideLayer, calcLayer;
+// ===== モード管理 =====
+let googleMode = false;
+let googleApiKey = '';
+let leafletMap = null;
+let googleMap = null;
+let guideLayer, calcLayer;
+let googleGuideObjects = [];
+let googleCalcObjects = [];
 
+const STORAGE_KEY = 'kikitaihan_gmaps_key';
+
+// ===== 初期化 =====
+function init() {
+  const selector = document.getElementById('sel-store');
+  STORES.forEach((s, i) => {
+    const o = document.createElement('option');
+    o.value = i; o.textContent = s.name;
+    selector.appendChild(o);
+  });
+  selector.onchange = updateView;
+  document.getElementById('btn-calc').onclick = calculate;
+
+  // 保存済みキーを確認
+  const savedKey = localStorage.getItem(STORAGE_KEY);
+  if (savedKey) {
+    googleApiKey = savedKey;
+    document.getElementById('inp-apikey').value = savedKey;
+    document.getElementById('inp-apikey').classList.add('valid');
+    initGoogleMode();
+  } else {
+    initLeafletMode();
+  }
+
+  resetBulk();
+}
+
+// ===== Leafletモード初期化 =====
+function initLeafletMode() {
+  googleMode = false;
+  updateModeUI();
+
+  if (googleMap) {
+    document.getElementById('map').innerHTML = '';
+    googleMap = null;
+    googleGuideObjects = [];
+    googleCalcObjects = [];
+  }
+
+  leafletMap = L.map('map', { zoomControl: false });
+  L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', { attribution: "国土地理院" }).addTo(leafletMap);
+  guideLayer = L.featureGroup().addTo(leafletMap);
+  calcLayer = L.featureGroup().addTo(leafletMap);
+  updateView();
+}
+
+// ===== Googleモード初期化 =====
+function initGoogleMode() {
+  // 既存のLeafletを破棄
+  if (leafletMap) {
+    leafletMap.remove();
+    leafletMap = null;
+  }
+  document.getElementById('map').innerHTML = '';
+
+  // Google Maps JS APIを動的ロード
+  if (!window.google || !window.google.maps) {
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${googleApiKey}&language=ja&callback=onGoogleMapsReady`;
+    script.async = true;
+    script.onerror = () => {
+      showSettingsStatus('APIキーが無効か、Maps JavaScript APIが有効化されていません。', 'err');
+      initLeafletMode();
+    };
+    document.head.appendChild(script);
+  } else {
+    onGoogleMapsReady();
+  }
+}
+
+window.onGoogleMapsReady = function() {
+  googleMode = true;
+  updateModeUI();
+
+  const store = STORES[document.getElementById('sel-store').value || 0];
+  googleMap = new google.maps.Map(document.getElementById('map'), {
+    center: { lat: store.lat, lng: store.lng },
+    zoom: 13,
+    disableDefaultUI: true,
+    zoomControl: false,
+  });
+
+  updateView();
+};
+
+// ===== モードUI更新 =====
+function updateModeUI() {
+  const badge = document.getElementById('mode-badge');
+  const hint = document.getElementById('input-hint-text');
+  const bulkHeader = document.getElementById('bulk-col-header');
+  const inp = document.getElementById('inp-coords');
+
+  if (googleMode) {
+    badge.textContent = 'Google';
+    badge.className = 'google';
+    inp.placeholder = '例）東京都板橋区大山町1-1';
+    hint.innerHTML = '🏠 住所を番地まで入力してください';
+    bulkHeader.textContent = '現在地（住所）';
+    document.getElementById('modal-body-coords').style.display = 'none';
+    document.getElementById('modal-body-address').style.display = 'block';
+  } else {
+    badge.textContent = '地理院';
+    badge.className = '';
+    inp.placeholder = '例）35.7322, 139.7096';
+    hint.innerHTML = '📌 Plus Code例：<strong>QP25+3G 板橋区</strong><br>🗺 緯度経度例：<strong>35.7322, 139.7096</strong>';
+    bulkHeader.textContent = '現在地（座標 / Plus Code）';
+    document.getElementById('modal-body-coords').style.display = 'block';
+    document.getElementById('modal-body-address').style.display = 'none';
+  }
+}
+
+// ===== 設定モーダル =====
+function openSettings() {
+  const key = localStorage.getItem(STORAGE_KEY) || '';
+  document.getElementById('inp-apikey').value = key;
+  if (key) document.getElementById('inp-apikey').classList.add('valid');
+  document.getElementById('settings-status').textContent = googleMode
+    ? '現在：Googleモードで動作中'
+    : '現在：地理院モードで動作中';
+  document.getElementById('settings-status').className = 'settings-status ' + (googleMode ? 'ok' : '');
+  document.getElementById('settings-modal').style.display = 'flex';
+}
+
+function closeSettings() {
+  document.getElementById('settings-modal').style.display = 'none';
+}
+
+function toggleKeyVisibility() {
+  const inp = document.getElementById('inp-apikey');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+function applyApiKey() {
+  const key = document.getElementById('inp-apikey').value.trim();
+  if (!key) { showSettingsStatus('APIキーを入力してください。', 'err'); return; }
+  googleApiKey = key;
+  localStorage.setItem(STORAGE_KEY, key);
+  document.getElementById('inp-apikey').classList.add('valid');
+  showSettingsStatus('保存しました。Googleモードに切替中…', 'ok');
+  setTimeout(() => {
+    closeSettings();
+    // 既存のgoogleスクリプトがあれば削除して再ロード
+    const old = document.querySelector('script[src*="maps.googleapis.com"]');
+    if (old) old.remove();
+    window.google = undefined;
+    initGoogleMode();
+  }, 800);
+}
+
+function clearApiKey() {
+  localStorage.removeItem(STORAGE_KEY);
+  googleApiKey = '';
+  document.getElementById('inp-apikey').value = '';
+  document.getElementById('inp-apikey').classList.remove('valid');
+  showSettingsStatus('キーを削除しました。地理院モードに戻ります。', '');
+  setTimeout(() => {
+    closeSettings();
+    initLeafletMode();
+  }, 800);
+}
+
+function showSettingsStatus(msg, cls) {
+  const el = document.getElementById('settings-status');
+  el.textContent = msg;
+  el.className = 'settings-status ' + cls;
+}
+
+// ===== 住所→座標変換（Geocoding API） =====
+async function geocode(address) {
+  const res = await fetch(
+    `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${googleApiKey}&language=ja`
+  );
+  const data = await res.json();
+  if (data.status !== 'OK' || !data.results.length) return null;
+  const loc = data.results[0].geometry.location;
+  return { lat: loc.lat, lng: loc.lng, formatted: data.results[0].formatted_address };
+}
+
+// ===== 共通UI =====
 function toggleModal(show) { document.getElementById('modal-overlay').style.display = show ? 'flex' : 'none'; }
 function toggleClear() {
   const inp = document.getElementById('inp-coords');
-  const btn = document.getElementById('btn-clear');
-  btn.style.display = inp.value.length > 0 ? 'flex' : 'none';
+  document.getElementById('btn-clear').style.display = inp.value.length > 0 ? 'flex' : 'none';
 }
 function clearInput() {
   document.getElementById('inp-coords').value = '';
   document.getElementById('btn-clear').style.display = 'none';
   document.getElementById('inp-coords').focus();
 }
-
 function showResult() {
   const formPanel = document.getElementById('form-panel');
   const resultPanel = document.getElementById('result-panel');
   resultPanel.style.top = (10 + formPanel.offsetHeight + 8) + 'px';
   resultPanel.style.display = 'block';
 }
-
-function closeResult() {
-  document.getElementById('result-panel').style.display = 'none';
-}
-
+function closeResult() { document.getElementById('result-panel').style.display = 'none'; }
 function openBulkScreen() { document.getElementById('bulk-screen').style.display = 'flex'; }
 function closeBulkScreen() { document.getElementById('bulk-screen').style.display = 'none'; }
+
+// ===== 地図更新 =====
+function updateView() {
+  const store = STORES[document.getElementById('sel-store').value];
+  closeResult();
+  if (googleMode && googleMap) {
+    clearGoogleLayers();
+    drawGoogleGuides(store.lat, store.lng);
+    new google.maps.Marker({ position: { lat: store.lat, lng: store.lng }, map: googleMap, title: store.name });
+    googleMap.setCenter({ lat: store.lat, lng: store.lng });
+    googleMap.setZoom(13);
+  } else if (leafletMap) {
+    guideLayer.clearLayers(); calcLayer.clearLayers();
+    drawLeafletGuides(store.lat, store.lng);
+    L.marker([store.lat, store.lng]).addTo(guideLayer).bindPopup(`<strong>${store.name}</strong>`).openPopup();
+    leafletMap.setView([store.lat, store.lng], 13);
+  }
+}
+
+// ===== 判定実行 =====
+async function calculate() {
+  const store = STORES[document.getElementById('sel-store').value];
+  const input = document.getElementById('inp-coords').value.trim();
+  if (!input) return;
+
+  let targetLat, targetLng, detailText;
+
+  if (googleMode) {
+    document.getElementById('btn-calc').textContent = '検索中…';
+    document.getElementById('btn-calc').disabled = true;
+    try {
+      const result = await geocode(input);
+      if (!result) { alert('住所が見つかりませんでした。入力を確認してください。'); return; }
+      targetLat = result.lat; targetLng = result.lng;
+      detailText = result.formatted;
+    } catch(e) {
+      alert('住所の検索に失敗しました。APIキーを確認してください。');
+      return;
+    } finally {
+      document.getElementById('btn-calc').textContent = '③ 判定を実行';
+      document.getElementById('btn-calc').disabled = false;
+    }
+  } else {
+    try {
+      if (input.includes('+')) {
+        const codePart = input.split(/[\s,、　]/)[0].trim().toUpperCase();
+        if (!OpenLocationCode.isValid(codePart)) throw new Error('invalid');
+        const fullCode = OpenLocationCode.isFull(codePart)
+          ? codePart
+          : OpenLocationCode.recoverNearest(codePart, store.lat, store.lng);
+        const res = OpenLocationCode.decode(fullCode);
+        targetLat = res.latitudeCenter; targetLng = res.longitudeCenter;
+      } else {
+        const match = input.match(/(-?\d+\.?\d*)\s*[,\s]\s*(-?\d+\.?\d*)/);
+        if (!match) throw new Error('invalid');
+        targetLat = parseFloat(match[1]); targetLng = parseFloat(match[2]);
+      }
+    } catch(e) { alert('正しい形式で入力してください（Plus Codeまたは緯度経度）'); return; }
+  }
+
+  const { dist, dStr, hStr, dClass, hour } = calcResult(store, targetLat, targetLng);
+
+  if (googleMode && googleMap) {
+    clearGoogleCalc();
+    if (dStr !== '00') drawGoogleArea(store, dClass, hour);
+    new google.maps.Marker({ position: { lat: targetLat, lng: targetLng }, map: googleMap });
+    new google.maps.Polyline({
+      path: [{ lat: store.lat, lng: store.lng }, { lat: targetLat, lng: targetLng }],
+      strokeColor: '#1a252f', strokeOpacity: 0.7, strokeWeight: 2, map: googleMap
+    });
+    const bounds = new google.maps.LatLngBounds();
+    bounds.extend({ lat: store.lat, lng: store.lng });
+    bounds.extend({ lat: targetLat, lng: targetLng });
+    googleMap.fitBounds(bounds, 60);
+  } else if (leafletMap) {
+    calcLayer.clearLayers();
+    if (dStr !== '00') drawLeafletArea(store, dClass, hour);
+    L.marker([targetLat, targetLng]).addTo(calcLayer);
+    L.polyline([[store.lat, store.lng], [targetLat, targetLng]], { color: '#1a252f', dashArray: '5,10' }).addTo(calcLayer);
+    leafletMap.fitBounds(L.latLngBounds([store.lat, store.lng], [targetLat, targetLng]), { padding: [50, 50] });
+  }
+
+  document.getElementById('res-dist').textContent = dStr;
+  document.getElementById('res-hour').textContent = hStr;
+  document.getElementById('res-detail').textContent = detailText || `${dist.toFixed(2)} km`;
+  showResult();
+}
+
+// ===== 計算ロジック =====
+function calcResult(store, targetLat, targetLng) {
+  const R = 6371;
+  const dLat = (targetLat - store.lat) * Math.PI / 180;
+  const dLon = (targetLng - store.lng) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(store.lat*Math.PI/180)*Math.cos(targetLat*Math.PI/180)*Math.sin(dLon/2)**2;
+  const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const bearing = (Math.atan2(
+    Math.sin(dLon)*Math.cos(targetLat*Math.PI/180),
+    Math.cos(store.lat*Math.PI/180)*Math.sin(targetLat*Math.PI/180) - Math.sin(store.lat*Math.PI/180)*Math.cos(targetLat*Math.PI/180)*Math.cos(dLon)
+  ) * 180/Math.PI + 360) % 360;
+  let hour = Math.floor(((bearing + 15) % 360) / 30);
+  if (hour === 0) hour = 12;
+  const dClass = dist <= 10.0 ? Math.ceil(dist / 5) * 5 : 0;
+  const dStr = dClass > 0 ? dClass.toString().padStart(2, '0') : '00';
+  const hStr = hour.toString().padStart(2, '0');
+  return { dist, dStr, hStr, dClass, hour };
+}
+
+function getDestPoint(lat, lng, dist, angle) {
+  const R = 6371000, d = dist/R, a = angle*Math.PI/180, la1 = lat*Math.PI/180, lo1 = lng*Math.PI/180;
+  const la2 = Math.asin(Math.sin(la1)*Math.cos(d) + Math.cos(la1)*Math.sin(d)*Math.cos(a));
+  const lo2 = lo1 + Math.atan2(Math.sin(a)*Math.sin(d)*Math.cos(la1), Math.cos(d)-Math.sin(la1)*Math.sin(la2));
+  return { lat: la2*180/Math.PI, lng: lo2*180/Math.PI };
+}
+
+// ===== Leaflet描画 =====
+function drawLeafletGuides(lat, lng) {
+  for (let i = 1; i <= 12; i++) {
+    const angle = i * 30;
+    const end = getDestPoint(lat, lng, 12000, angle - 15);
+    L.polyline([[lat, lng], [end.lat, end.lng]], { color: '#ff0000', weight: 4, opacity: 0.2 }).addTo(guideLayer);
+    const numPos = getDestPoint(lat, lng, 8000, angle);
+    L.marker([numPos.lat, numPos.lng], { icon: L.divIcon({ className: 'area-label-ultra', html: i.toString().padStart(2, '0') }), interactive: false }).addTo(guideLayer);
+  }
+  [5000, 10000].forEach(r => {
+    L.circle([lat, lng], { radius: r, color: '#ff0000', weight: 5, fillOpacity: 0, opacity: 0.5 }).addTo(guideLayer);
+    const labelPos = getDestPoint(lat, lng, r, 225);
+    L.marker([labelPos.lat, labelPos.lng], { icon: L.divIcon({ className: 'dist-box-label', html: `<span>${r/1000}km</span>` }), interactive: false }).addTo(guideLayer);
+  });
+}
+
+function drawLeafletArea(store, dClass, hour) {
+  const p = [];
+  const drawHour = hour === 12 ? 0 : hour;
+  for (let i = drawHour*30-15; i <= drawHour*30+15; i+=2) p.push(getDestPoint(store.lat, store.lng, dClass*1000, i));
+  for (let i = drawHour*30+15; i >= drawHour*30-15; i-=2) p.push(getDestPoint(store.lat, store.lng, (dClass-5)*1000, i));
+  L.polygon(p.map(x => [x.lat, x.lng]), { color: '#ff0000', fillOpacity: 0.5 }).addTo(calcLayer);
+}
+
+// ===== Google Maps描画 =====
+function clearGoogleLayers() {
+  googleGuideObjects.forEach(o => o.setMap(null));
+  googleGuideObjects = [];
+  clearGoogleCalc();
+}
+function clearGoogleCalc() {
+  googleCalcObjects.forEach(o => o.setMap(null));
+  googleCalcObjects = [];
+}
+
+function drawGoogleGuides(lat, lng) {
+  for (let i = 1; i <= 12; i++) {
+    const angle = i * 30;
+    const end = getDestPoint(lat, lng, 12000, angle - 15);
+    const line = new google.maps.Polyline({
+      path: [{ lat, lng }, { lat: end.lat, lng: end.lng }],
+      strokeColor: '#ff0000', strokeOpacity: 0.2, strokeWeight: 3, map: googleMap
+    });
+    googleGuideObjects.push(line);
+  }
+  [5000, 10000].forEach(r => {
+    const circle = new google.maps.Circle({
+      center: { lat, lng }, radius: r,
+      strokeColor: '#ff0000', strokeOpacity: 0.5, strokeWeight: 3,
+      fillOpacity: 0, map: googleMap
+    });
+    googleGuideObjects.push(circle);
+  });
+}
+
+function drawGoogleArea(store, dClass, hour) {
+  const p = [];
+  const drawHour = hour === 12 ? 0 : hour;
+  for (let i = drawHour*30-15; i <= drawHour*30+15; i+=2) {
+    const pt = getDestPoint(store.lat, store.lng, dClass*1000, i);
+    p.push({ lat: pt.lat, lng: pt.lng });
+  }
+  for (let i = drawHour*30+15; i >= drawHour*30-15; i-=2) {
+    const pt = getDestPoint(store.lat, store.lng, (dClass-5)*1000, i);
+    p.push({ lat: pt.lat, lng: pt.lng });
+  }
+  const poly = new google.maps.Polygon({
+    paths: p, strokeColor: '#ff0000', strokeOpacity: 0.8, strokeWeight: 2,
+    fillColor: '#ff0000', fillOpacity: 0.4, map: googleMap
+  });
+  googleCalcObjects.push(poly);
+}
+
+// ===== 一括入力 =====
+function calcCode(store, input) {
+  let targetLat, targetLng;
+  if (input.includes('+')) {
+    const codePart = input.split(/[\s,、　]/)[0].trim().toUpperCase();
+    if (!OpenLocationCode.isValid(codePart)) return null;
+    const fullCode = OpenLocationCode.isFull(codePart) ? codePart : OpenLocationCode.recoverNearest(codePart, store.lat, store.lng);
+    const res = OpenLocationCode.decode(fullCode);
+    targetLat = res.latitudeCenter; targetLng = res.longitudeCenter;
+  } else {
+    const match = input.match(/(-?\d+\.?\d*)\s*[,\s]\s*(-?\d+\.?\d*)/);
+    if (!match) return null;
+    targetLat = parseFloat(match[1]); targetLng = parseFloat(match[2]);
+  }
+  const r = calcResult(store, targetLat, targetLng);
+  return { dist: r.dStr, hour: r.hStr };
+}
+
+async function calcCodeGoogle(store, address) {
+  const result = await geocode(address);
+  if (!result) return null;
+  const r = calcResult(store, result.lat, result.lng);
+  return { dist: r.dStr, hour: r.hStr };
+}
 
 function addBulkRow(name) {
   const tbody = document.getElementById('bulk-tbody');
   const tr = document.createElement('tr');
   const storeOptions = STORES.map((s, i) => `<option value="${i}">${s.name}</option>`).join('');
+  const placeholder = googleMode ? '例）東京都板橋区大山町1-1' : '例）35.7322, 139.7096';
   tr.innerHTML = `
     <td><input class="bulk-name-input" type="text" placeholder="氏名" value="${name || ''}"></td>
     <td><select class="bulk-store-select"><option value="">店舗を選択</option>${storeOptions}</select></td>
     <td>
       <div class="bulk-coord-wrap">
-        <input class="bulk-coord-input" type="text" placeholder="例）35.7322, 139.7096">
+        <input class="bulk-coord-input" type="text" placeholder="${placeholder}">
         <button class="bulk-clear-btn" onclick="clearBulkCoord(this)">×</button>
       </div>
     </td>
@@ -237,16 +714,13 @@ function addBulkRow(name) {
   coordInput.addEventListener('input', () => {
     clearBtn.style.display = coordInput.value.length > 0 ? 'flex' : 'none';
   });
-  const nameInput = tr.querySelector('.bulk-name-input');
-  nameInput.addEventListener('paste', handleNamePaste);
+  tr.querySelector('.bulk-name-input').addEventListener('paste', handleNamePaste);
   tbody.appendChild(tr);
 }
 
 function clearBulkCoord(btn) {
   const input = btn.previousElementSibling;
-  input.value = '';
-  btn.style.display = 'none';
-  input.focus();
+  input.value = ''; btn.style.display = 'none'; input.focus();
 }
 
 function handleNamePaste(e) {
@@ -254,16 +728,12 @@ function handleNamePaste(e) {
   const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l !== '');
   if (lines.length <= 1) return;
   e.preventDefault();
-  const tbody = document.getElementById('bulk-tbody');
-  const rows = Array.from(tbody.querySelectorAll('tr'));
-  const currentRowIndex = rows.indexOf(e.target.closest('tr'));
+  const rows = Array.from(document.getElementById('bulk-tbody').querySelectorAll('tr'));
+  const currentIndex = rows.indexOf(e.target.closest('tr'));
   lines.forEach((name, i) => {
-    const targetIndex = currentRowIndex + i;
-    if (targetIndex < rows.length) {
-      rows[targetIndex].querySelector('.bulk-name-input').value = name;
-    } else {
-      addBulkRow(name);
-    }
+    const idx = currentIndex + i;
+    if (idx < rows.length) rows[idx].querySelector('.bulk-name-input').value = name;
+    else addBulkRow(name);
   });
 }
 
@@ -274,58 +744,29 @@ function resetBulk() {
   for (let i = 0; i < 5; i++) addBulkRow();
 }
 
-function getDestPoint(lat, lng, dist, angle) {
-  const R = 6371000, d = dist / R, a = angle * Math.PI / 180, la1 = lat * Math.PI / 180, lo1 = lng * Math.PI / 180;
-  const la2 = Math.asin(Math.sin(la1) * Math.cos(d) + Math.cos(la1) * Math.sin(d) * Math.cos(a));
-  const lo2 = lo1 + Math.atan2(Math.sin(a) * Math.sin(d) * Math.cos(la1), Math.cos(d) - Math.sin(la1) * Math.sin(la2));
-  return { lat: la2 * 180 / Math.PI, lng: lo2 * 180 / Math.PI };
-}
-
-function calcCode(store, input) {
-  let targetLat, targetLng;
-  if (input.includes('+')) {
-    const codePart = input.split(/[\s,、　]/)[0].trim().toUpperCase();
-    if (!OpenLocationCode.isValid(codePart)) return null;
-    const fullCode = OpenLocationCode.isFull(codePart)
-      ? codePart
-      : OpenLocationCode.recoverNearest(codePart, store.lat, store.lng);
-    const res = OpenLocationCode.decode(fullCode);
-    targetLat = res.latitudeCenter; targetLng = res.longitudeCenter;
-  } else {
-    const match = input.match(/(-?\d+\.?\d*)\s*[,\s]\s*(-?\d+\.?\d*)/);
-    if (!match) return null;
-    targetLat = parseFloat(match[1]); targetLng = parseFloat(match[2]);
-  }
-  const R = 6371;
-  const dLat = (targetLat - store.lat) * Math.PI / 180;
-  const dLon = (targetLng - store.lng) * Math.PI / 180;
-  const a = Math.sin(dLat/2)**2 + Math.cos(store.lat*Math.PI/180)*Math.cos(targetLat*Math.PI/180)*Math.sin(dLon/2)**2;
-  const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const bearing = (Math.atan2(Math.sin(dLon)*Math.cos(targetLat*Math.PI/180), Math.cos(store.lat*Math.PI/180)*Math.sin(targetLat*Math.PI/180)-Math.sin(store.lat*Math.PI/180)*Math.cos(targetLat*Math.PI/180)*Math.cos(dLon))*180/Math.PI+360)%360;
-  let hour = Math.floor(((bearing + 15) % 360) / 30);
-  if (hour === 0) hour = 12;
-  let dStr = '00';
-  if (dist <= 10.0) { dStr = (Math.ceil(dist / 5) * 5).toString().padStart(2, '0'); }
-  return { dist: dStr, hour: hour.toString().padStart(2, '0') };
-}
-
-function runAll() {
+async function runAll() {
   const rows = document.querySelectorAll('#bulk-tbody tr');
   let total = 0, success = 0;
-  rows.forEach(tr => {
+  document.getElementById('btn-run-all').textContent = '実行中…';
+  document.getElementById('btn-run-all').disabled = true;
+
+  for (const tr of rows) {
     const storeIdx = tr.querySelector('.bulk-store-select').value;
     const coordVal = tr.querySelector('.bulk-coord-input').value.trim();
     const distEl = tr.querySelector('.bulk-result-dist');
     const hourEl = tr.querySelector('.bulk-result-hour');
-    if (!storeIdx || !coordVal) return;
+    if (!storeIdx || !coordVal) continue;
     total++;
     try {
-      const result = calcCode(STORES[storeIdx], coordVal);
+      let result;
+      if (googleMode) {
+        result = await calcCodeGoogle(STORES[storeIdx], coordVal);
+      } else {
+        result = calcCode(STORES[storeIdx], coordVal);
+      }
       if (result) {
-        distEl.textContent = result.dist;
-        hourEl.textContent = result.hour;
-        distEl.classList.add('filled');
-        hourEl.classList.add('filled');
+        distEl.textContent = result.dist; hourEl.textContent = result.hour;
+        distEl.classList.add('filled'); hourEl.classList.add('filled');
         success++;
       } else {
         distEl.textContent = 'ERR'; hourEl.textContent = 'ERR';
@@ -334,7 +775,10 @@ function runAll() {
     } catch {
       distEl.textContent = 'ERR'; hourEl.textContent = 'ERR';
     }
-  });
+  }
+
+  document.getElementById('btn-run-all').textContent = '全件実行';
+  document.getElementById('btn-run-all').disabled = false;
   document.getElementById('bulk-status').textContent = `${total}件中 ${success}件完了`;
   if (success > 0) document.getElementById('btn-dl-csv').style.display = 'inline-block';
 }
@@ -355,94 +799,6 @@ function downloadCSV() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href = url; a.download = '帰宅班コード.csv'; a.click();
   URL.revokeObjectURL(url);
-}
-
-function init() {
-  const selector = document.getElementById('sel-store');
-  STORES.forEach((s, i) => { const o = document.createElement('option'); o.value = i; o.textContent = s.name; selector.appendChild(o); });
-  map = L.map('map', { zoomControl: false });
-  L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', { attribution: "国土地理院" }).addTo(map);
-  guideLayer = L.featureGroup().addTo(map);
-  calcLayer = L.featureGroup().addTo(map);
-  selector.onchange = updateView;
-  document.getElementById('btn-calc').onclick = calculate;
-  resetBulk();
-  updateView();
-}
-
-function drawGuides(lat, lng) {
-  const radii = [5000, 10000];
-  for (let i = 1; i <= 12; i++) {
-    const angle = i * 30;
-    const end = getDestPoint(lat, lng, 12000, (angle - 15));
-    L.polyline([[lat, lng], [end.lat, end.lng]], { color: '#ff0000', weight: 4, opacity: 0.2 }).addTo(guideLayer);
-    const numPos = getDestPoint(lat, lng, 8000, angle);
-    L.marker([numPos.lat, numPos.lng], { icon: L.divIcon({ className: 'area-label-ultra', html: i.toString().padStart(2, '0') }), interactive: false }).addTo(guideLayer);
-  }
-  radii.forEach(r => {
-    L.circle([lat, lng], { radius: r, color: '#ff0000', weight: 5, fillOpacity: 0, opacity: 0.5 }).addTo(guideLayer);
-    const labelPos = getDestPoint(lat, lng, r, 225);
-    L.marker([labelPos.lat, labelPos.lng], { icon: L.divIcon({ className: 'dist-box-label', html: `<span>${r / 1000}km</span>` }), interactive: false }).addTo(guideLayer);
-  });
-}
-
-function updateView() {
-  const store = STORES[document.getElementById('sel-store').value];
-  guideLayer.clearLayers(); calcLayer.clearLayers();
-  closeResult();
-  drawGuides(store.lat, store.lng);
-  L.marker([store.lat, store.lng]).addTo(guideLayer).bindPopup(`<strong>${store.name}</strong>`).openPopup();
-  map.setView([store.lat, store.lng], 13);
-}
-
-function calculate() {
-  const store = STORES[document.getElementById('sel-store').value];
-  let input = document.getElementById('inp-coords').value.trim();
-  if (!input) return;
-  let targetLat, targetLng;
-  try {
-    if (input.includes('+')) {
-      const codePart = input.split(/[\s,、　]/)[0].trim().toUpperCase();
-      if (typeof OpenLocationCode === 'undefined') { alert("ライブラリの読み込みに失敗しました。"); return; }
-      if (!OpenLocationCode.isValid(codePart)) throw new Error("Invalid Plus Code");
-      let fullCode = OpenLocationCode.isFull(codePart) ? codePart : OpenLocationCode.recoverNearest(codePart, store.lat, store.lng);
-      const res = OpenLocationCode.decode(fullCode);
-      targetLat = res.latitudeCenter; targetLng = res.longitudeCenter;
-    } else {
-      const match = input.match(/(-?\d+\.?\d*)\s*[,\s]\s*(-?\d+\.?\d*)/);
-      if (!match) throw new Error("Invalid format");
-      targetLat = parseFloat(match[1]); targetLng = parseFloat(match[2]);
-    }
-  } catch(e) { alert("正しい形式で入力してください（Plus Codeまたは緯度経度）"); return; }
-
-  const R = 6371;
-  const dLat = (targetLat - store.lat) * Math.PI / 180;
-  const dLon = (targetLng - store.lng) * Math.PI / 180;
-  const a = Math.sin(dLat/2)**2 + Math.cos(store.lat*Math.PI/180)*Math.cos(targetLat*Math.PI/180)*Math.sin(dLon/2)**2;
-  const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  calcLayer.clearLayers();
-  const bearing = (Math.atan2(Math.sin(dLon)*Math.cos(targetLat*Math.PI/180), Math.cos(store.lat*Math.PI/180)*Math.sin(targetLat*Math.PI/180)-Math.sin(store.lat*Math.PI/180)*Math.cos(targetLat*Math.PI/180)*Math.cos(dLon))*180/Math.PI+360)%360;
-  let hour = Math.floor(((bearing + 15) % 360) / 30);
-  if (hour === 0) hour = 12;
-  const hStr = hour.toString().padStart(2, '0');
-  let dStr = '00';
-  if (dist <= 10.0) {
-    const dClass = Math.ceil(dist / 5) * 5;
-    dStr = dClass.toString().padStart(2, '0');
-    const p = [];
-    const drawHour = hour === 12 ? 0 : hour;
-    for(let i=drawHour*30-15;i<=drawHour*30+15;i+=2) p.push(getDestPoint(store.lat,store.lng,dClass*1000,i));
-    for(let i=drawHour*30+15;i>=drawHour*30-15;i-=2) p.push(getDestPoint(store.lat,store.lng,(dClass-5)*1000,i));
-    L.polygon(p.map(x=>[x.lat,x.lng]), {color:'#ff0000',fillOpacity:0.5}).addTo(calcLayer);
-  }
-  L.marker([targetLat,targetLng]).addTo(calcLayer);
-  L.polyline([[store.lat,store.lng],[targetLat,targetLng]],{color:'#1a252f',dashArray:'5,10'}).addTo(calcLayer);
-  map.fitBounds(L.latLngBounds([store.lat,store.lng],[targetLat,targetLng]),{padding:[50,50]});
-
-  document.getElementById('res-dist').textContent = dStr;
-  document.getElementById('res-hour').textContent = hStr;
-  document.getElementById('res-detail').textContent = `${dist.toFixed(2)} km`;
-  showResult();
 }
 
 window.onload = init;
