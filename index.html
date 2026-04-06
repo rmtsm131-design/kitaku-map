@@ -43,13 +43,6 @@
     .close-btn { background: #444; color: white; border: none; width: 100%; padding: 12px; border-radius: 8px; font-weight: bold; margin-top: 15px; cursor: pointer; }
     .plus-code-ex { background: #eef2f7; padding: 8px; border-radius: 4px; font-family: monospace; font-size: 13px; border-left: 4px solid #3498db; }
 
-    .version-tag { font-size: 11px; font-weight: 700; color: #999; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
-    .version-tag:hover { color: #666; }
-    .version-history-item { margin-bottom: 14px; }
-    .version-history-item .ver-num { font-size: 13px; font-weight: 900; color: #ff0000; }
-    .version-history-item .ver-date { font-size: 11px; color: #999; margin-left: 6px; }
-    .version-history-item ul { margin: 4px 0 0 0; padding-left: 18px; font-size: 12px; color: #444; line-height: 1.8; }
-
     #result-panel { position: absolute; left: 10px; width: calc(100vw - 20px); max-width: 310px; padding: 20px; background: #1a252f; color: white; display: none; text-align: center; border: 3px solid #f1c40f; z-index: 1001; }
     .res-val { font-size: 42px; font-weight: 900; color: #f1c40f; line-height: 1; font-family: 'Courier New', monospace; }
     .dist-box-label { background: #ff0000 !important; color: #ffffff !important; border: 2px solid #ffffff; border-radius: 4px; font-weight: 900; font-size: 14px; width: 55px !important; height: 26px !important; line-height: 22px; text-align: center; display: flex; align-items: center; justify-content: center; }
@@ -90,9 +83,8 @@
 <div id="map"></div>
 
 <div id="form-panel" class="floating-panel">
-  <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:5px;">
+  <div style="margin-bottom:5px;">
     <div class="panel-title">帰宅班マップ</div>
-    <span class="version-tag" onclick="toggleVersionModal(true)">v1.1</span>
   </div>
   <span class="help-link" onclick="toggleModal(true)">📍 座標・Plus Codeの調べ方</span>
 
@@ -129,28 +121,6 @@
     <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
     <p style="font-size:13px;"><strong>【PC：緯度経度】</strong><br>1. Googleマップ上を<strong>右クリック</strong><br>2. 一番上の数字をクリックしてコピー完了</p>
     <button class="close-btn" onclick="toggleModal(false)">閉じる</button>
-  </div>
-</div>
-
-<div id="version-modal-overlay" class="modal-overlay" onclick="toggleVersionModal(false)">
-  <div class="modal-content" onclick="event.stopPropagation()">
-    <h3 style="margin-top:0; color:#ff0000;">📋 バージョン履歴</h3>
-    <div class="version-history-item">
-      <span class="ver-num">v1.1</span><span class="ver-date">2025年</span>
-      <ul>
-        <li>一括入力モードを追加</li>
-        <li>複数名の帰宅班コードを一括計算・CSV出力に対応</li>
-      </ul>
-    </div>
-    <div class="version-history-item">
-      <span class="ver-num">v1.0</span><span class="ver-date">2025年</span>
-      <ul>
-        <li>初版リリース</li>
-        <li>店舗選択・座標入力による帰宅班コード判定</li>
-        <li>Plus Code・緯度経度に対応</li>
-      </ul>
-    </div>
-    <button class="close-btn" onclick="toggleVersionModal(false)">閉じる</button>
   </div>
 </div>
 
@@ -223,7 +193,6 @@ const STORES = [
 let map, guideLayer, calcLayer;
 
 function toggleModal(show) { document.getElementById('modal-overlay').style.display = show ? 'flex' : 'none'; }
-function toggleVersionModal(show) { document.getElementById('version-modal-overlay').style.display = show ? 'flex' : 'none'; }
 function toggleClear() {
   const inp = document.getElementById('inp-coords');
   const btn = document.getElementById('btn-clear');
@@ -238,9 +207,7 @@ function clearInput() {
 function showResult() {
   const formPanel = document.getElementById('form-panel');
   const resultPanel = document.getElementById('result-panel');
-  const formTop = 10;
-  const formHeight = formPanel.offsetHeight;
-  resultPanel.style.top = (formTop + formHeight + 8) + 'px';
+  resultPanel.style.top = (10 + formPanel.offsetHeight + 8) + 'px';
   resultPanel.style.display = 'block';
 }
 
