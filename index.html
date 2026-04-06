@@ -44,7 +44,7 @@
     .close-btn { background: #444; color: white; border: none; width: 100%; padding: 12px; border-radius: 8px; font-weight: bold; margin-top: 15px; cursor: pointer; }
     .plus-code-ex { background: #eef2f7; padding: 8px; border-radius: 4px; font-family: monospace; font-size: 13px; border-left: 4px solid #3498db; }
 
-    /* バージョン履歴モーダル */
+    /* バージョン履歴 */
     .version-tag { font-size: 11px; font-weight: 700; color: #999; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
     .version-tag:hover { color: #666; }
     .version-history-item { margin-bottom: 14px; }
@@ -53,7 +53,7 @@
     .version-history-item ul { margin: 4px 0 0 0; padding-left: 18px; font-size: 12px; color: #444; line-height: 1.8; }
 
     /* 結果パネル */
-    #result-panel { top: 10px; right: 10px; width: 310px; padding: 20px; background: #1a252f; color: white; display: none; text-align: center; border: 3px solid #f1c40f; }
+    #result-panel { bottom: 10px; left: 10px; width: 310px; padding: 20px; background: #1a252f; color: white; display: none; text-align: center; border: 3px solid #f1c40f; }
     .res-val { font-size: 42px; font-weight: 900; color: #f1c40f; line-height: 1; font-family: 'Courier New', monospace; }
     .dist-box-label { background: #ff0000 !important; color: #ffffff !important; border: 2px solid #ffffff; border-radius: 4px; font-weight: 900; font-size: 14px; width: 55px !important; height: 26px !important; line-height: 22px; text-align: center; display: flex; align-items: center; justify-content: center; }
     .area-label-ultra { background: #000000; color: #ffffff; border: 2px solid #ffffff; border-radius: 50%; width: 40px !important; height: 40px !important; line-height: 36px; text-align: center; font-weight: 900; font-size: 20px; }
@@ -244,20 +244,13 @@ function clearInput() {
   document.getElementById('inp-coords').focus();
 }
 
-function openBulkScreen() {
-  const s = document.getElementById('bulk-screen');
-  s.style.display = 'flex';
-}
-function closeBulkScreen() {
-  document.getElementById('bulk-screen').style.display = 'none';
-}
+function openBulkScreen() { document.getElementById('bulk-screen').style.display = 'flex'; }
+function closeBulkScreen() { document.getElementById('bulk-screen').style.display = 'none'; }
 
-// 一括入力 行生成
 function addBulkRow(name) {
   const tbody = document.getElementById('bulk-tbody');
   const tr = document.createElement('tr');
   const storeOptions = STORES.map((s, i) => `<option value="${i}">${s.name}</option>`).join('');
-
   tr.innerHTML = `
     <td><input class="bulk-name-input" type="text" placeholder="氏名" value="${name || ''}"></td>
     <td><select class="bulk-store-select"><option value="">店舗を選択</option>${storeOptions}</select></td>
@@ -271,18 +264,13 @@ function addBulkRow(name) {
     <td><div class="bulk-result-hour">--</div></td>
     <td><button class="bulk-row-del" onclick="this.closest('tr').remove()">✕</button></td>
   `;
-
-  // 座標入力の×ボタン制御
   const coordInput = tr.querySelector('.bulk-coord-input');
   const clearBtn = tr.querySelector('.bulk-clear-btn');
   coordInput.addEventListener('input', () => {
     clearBtn.style.display = coordInput.value.length > 0 ? 'flex' : 'none';
   });
-
-  // 氏名欄ペースト展開
   const nameInput = tr.querySelector('.bulk-name-input');
   nameInput.addEventListener('paste', handleNamePaste);
-
   tbody.appendChild(tr);
 }
 
@@ -296,13 +284,11 @@ function clearBulkCoord(btn) {
 function handleNamePaste(e) {
   const text = (e.clipboardData || window.clipboardData).getData('text');
   const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l !== '');
-  if (lines.length <= 1) return; // 1行なら通常ペースト
+  if (lines.length <= 1) return;
   e.preventDefault();
-
   const tbody = document.getElementById('bulk-tbody');
   const rows = Array.from(tbody.querySelectorAll('tr'));
   const currentRowIndex = rows.indexOf(e.target.closest('tr'));
-
   lines.forEach((name, i) => {
     const targetIndex = currentRowIndex + i;
     if (targetIndex < rows.length) {
@@ -320,7 +306,6 @@ function resetBulk() {
   for (let i = 0; i < 5; i++) addBulkRow();
 }
 
-// 計算ロジック（共通）
 function getDestPoint(lat, lng, dist, angle) {
   const R = 6371000, d = dist / R, a = angle * Math.PI / 180, la1 = lat * Math.PI / 180, lo1 = lng * Math.PI / 180;
   const la2 = Math.asin(Math.sin(la1) * Math.cos(d) + Math.cos(la1) * Math.sin(d) * Math.cos(a));
@@ -352,7 +337,7 @@ function calcCode(store, input) {
   let hour = Math.floor(((bearing + 15) % 360) / 30);
   if (hour === 0) hour = 12;
   let dStr = '00';
-  if (dist <= 10.0) { dStr = Math.ceil(dist / 5) * 5 < 10 ? '05' : '10'; }
+  if (dist <= 10.0) { dStr = (Math.ceil(dist / 5) * 5).toString().padStart(2, '0'); }
   return { dist: dStr, hour: hour.toString().padStart(2, '0') };
 }
 
@@ -364,7 +349,7 @@ function runAll() {
     const coordVal = tr.querySelector('.bulk-coord-input').value.trim();
     const distEl = tr.querySelector('.bulk-result-dist');
     const hourEl = tr.querySelector('.bulk-result-hour');
-    if (!storeIdx || !coordVal) return; // スキップ
+    if (!storeIdx || !coordVal) return;
     total++;
     try {
       const result = calcCode(STORES[storeIdx], coordVal);
@@ -388,7 +373,7 @@ function runAll() {
 
 function downloadCSV() {
   const rows = document.querySelectorAll('#bulk-tbody tr');
-  const lines = ['\uFEFF氏名,店舗,距離,方角']; // BOM付きUTF-8
+  const lines = ['\uFEFF氏名,店舗,距離,方角'];
   rows.forEach(tr => {
     const name = tr.querySelector('.bulk-name-input').value.trim();
     const storeIdx = tr.querySelector('.bulk-store-select').value;
@@ -501,4 +486,3 @@ window.onload = init;
 </script>
 </body>
 </html>
-
