@@ -61,16 +61,15 @@
     .close-btn { background: #444; color: white; border: none; width: 100%; padding: 12px; border-radius: 8px; font-weight: bold; margin-top: 15px; cursor: pointer; }
     .plus-code-ex { background: #eef2f7; padding: 8px; border-radius: 4px; font-family: monospace; font-size: 13px; border-left: 4px solid #3498db; }
 
-    #settings-modal .api-input-wrap { position: relative; margin: 10px 0; }
-    #inp-apikey { font-family: monospace; font-size: 13px; padding-right: 44px; border: 2px solid #ccc; }
-    #inp-apikey.valid { border-color: #27ae60; background: #f0fff4; }
-    #btn-toggle-key {
-      position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
-      background: none; border: none; cursor: pointer; font-size: 18px; color: #999; padding: 4px;
-    }
+    /* 設定モーダル */
+    #key-saved-view { display: none; background: #f0fff4; border: 2px solid #27ae60; border-radius: 8px; padding: 12px 14px; margin: 10px 0; }
+    #key-saved-view .key-mask { font-family: monospace; font-size: 16px; color: #1a252f; letter-spacing: 2px; display: block; margin-bottom: 6px; }
+    #key-saved-view .key-saved-label { font-size: 11px; color: #27ae60; font-weight: bold; }
+    #key-input-view { display: block; }
+    #inp-apikey { font-family: monospace; font-size: 13px; border: 2px solid #ccc; }
     #btn-apply-key { width: 100%; padding: 13px; background: #1a252f; color: #f1c40f; border: none; border-radius: 8px; font-weight: 900; font-size: 15px; cursor: pointer; margin-top: 6px; }
     #btn-apply-key:active { opacity: 0.8; }
-    #btn-clear-key { width: 100%; padding: 10px; background: #eee; color: #666; border: none; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; margin-top: 6px; }
+    #btn-clear-key { width: 100%; padding: 10px; background: #fee; color: #c0392b; border: 2px solid #e74c3c; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; margin-top: 8px; }
     .settings-status { font-size: 12px; margin-top: 8px; text-align: center; min-height: 18px; }
     .settings-status.ok { color: #27ae60; font-weight: bold; }
     .settings-status.err { color: #e74c3c; font-weight: bold; }
@@ -146,7 +145,7 @@
 
 <div id="modal-overlay" class="modal-overlay" onclick="toggleModal(false)">
   <div class="modal-content" onclick="event.stopPropagation()">
-    <h3 style="margin-top:0; color:#ff0000;" id="modal-title">📍 入力方法</h3>
+    <h3 style="margin-top:0; color:#ff0000;">📍 入力方法</h3>
     <div id="modal-body-coords">
       <p style="font-size:13px;"><strong>【スマホ：Plus Code】</strong><br>1. Googleマップで場所を<strong>長押し</strong><br>2. 下部の住所をタップして詳細を開く</p>
       <div style="background:#eee; padding:10px; border-radius:8px; text-align:center;">
@@ -173,13 +172,22 @@
     <h3 style="margin-top:0; color:#1a252f;">⚙️ 設定</h3>
     <p style="font-size:13px; font-weight:bold; margin-bottom:4px;">Google Maps APIキー</p>
     <p style="font-size:12px; color:#555; margin-top:0;">APIキーを入力・適用すると、地図がGoogleマップに切り替わり、住所入力で判定できるようになります。未入力の場合は国土地理院マップ＋座標入力で動作します。</p>
-    <div class="api-input-wrap">
-      <input type="password" id="inp-apikey" placeholder="AIza..." autocomplete="off">
-      <button id="btn-toggle-key" onclick="toggleKeyVisibility()" title="表示切替">👁</button>
+
+    <!-- 保存済み表示 -->
+    <div id="key-saved-view">
+      <span class="key-saved-label">✅ APIキー登録済み</span>
+      <span class="key-mask">●●●●●●●●●●●●●●●●</span>
     </div>
-    <button id="btn-apply-key" onclick="applyApiKey()">✅ 適用してGoogleモードに切替</button>
-    <button id="btn-clear-key" onclick="clearApiKey()">🗑 キーを削除して地理院モードに戻す</button>
+
+    <!-- 未登録時の入力欄 -->
+    <div id="key-input-view">
+      <input type="password" id="inp-apikey" placeholder="AIza..." autocomplete="off" style="margin: 10px 0;">
+      <button id="btn-apply-key" onclick="applyApiKey()">✅ 適用してGoogleモードに切替</button>
+    </div>
+
+    <button id="btn-clear-key" onclick="clearApiKey()">🗑 APIキーを削除して地理院モードに戻す</button>
     <div class="settings-status" id="settings-status"></div>
+
     <div class="api-note">
       💡 <strong>APIキーの取得方法：</strong><br>
       Google Cloud Console → 「Maps JavaScript API」と「Geocoding API」を有効化してキーを発行してください。<br><br>
@@ -276,8 +284,6 @@ function init() {
   const savedKey = localStorage.getItem(STORAGE_KEY);
   if (savedKey) {
     googleApiKey = savedKey;
-    document.getElementById('inp-apikey').value = savedKey;
-    document.getElementById('inp-apikey').classList.add('valid');
     initGoogleMode();
   } else {
     initLeafletMode();
@@ -366,9 +372,11 @@ function updateModeUI() {
 }
 
 function openSettings() {
-  const key = localStorage.getItem(STORAGE_KEY) || '';
-  document.getElementById('inp-apikey').value = key;
-  if (key) document.getElementById('inp-apikey').classList.add('valid');
+  const hasSavedKey = !!localStorage.getItem(STORAGE_KEY);
+  document.getElementById('key-saved-view').style.display = hasSavedKey ? 'block' : 'none';
+  document.getElementById('key-input-view').style.display = hasSavedKey ? 'none' : 'block';
+  document.getElementById('btn-clear-key').style.display = hasSavedKey ? 'block' : 'none';
+  document.getElementById('inp-apikey').value = '';
   const status = document.getElementById('settings-status');
   status.textContent = googleMode ? '現在：Googleモードで動作中' : '現在：地理院モードで動作中';
   status.className = 'settings-status ' + (googleMode ? 'ok' : '');
@@ -379,17 +387,11 @@ function closeSettings() {
   document.getElementById('settings-modal').style.display = 'none';
 }
 
-function toggleKeyVisibility() {
-  const inp = document.getElementById('inp-apikey');
-  inp.type = inp.type === 'password' ? 'text' : 'password';
-}
-
 function applyApiKey() {
   const key = document.getElementById('inp-apikey').value.trim();
   if (!key) { showSettingsStatus('APIキーを入力してください。', 'err'); return; }
   googleApiKey = key;
   localStorage.setItem(STORAGE_KEY, key);
-  document.getElementById('inp-apikey').classList.add('valid');
   showSettingsStatus('保存しました。Googleモードに切替中…', 'ok');
   setTimeout(() => {
     closeSettings();
@@ -403,8 +405,6 @@ function applyApiKey() {
 function clearApiKey() {
   localStorage.removeItem(STORAGE_KEY);
   googleApiKey = '';
-  document.getElementById('inp-apikey').value = '';
-  document.getElementById('inp-apikey').classList.remove('valid');
   showSettingsStatus('キーを削除しました。地理院モードに戻ります。', '');
   setTimeout(() => {
     closeSettings();
