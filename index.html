@@ -39,7 +39,6 @@
     .bulk-link:hover { color: #666; }
     .step-divider { border: none; border-top: 1px dashed #ddd; margin: 10px 0; }
 
-    /* モードバッジ */
     #mode-badge {
       display: inline-block; font-size: 10px; font-weight: 900;
       padding: 2px 7px; border-radius: 10px; margin-left: 6px;
@@ -47,7 +46,6 @@
     }
     #mode-badge.google { background: #e8f5e9; color: #2e7d32; }
 
-    /* 歯車ボタン */
     #btn-settings {
       position: absolute; top: 10px; right: 10px; z-index: 1001;
       width: 44px; height: 44px; border-radius: 50%;
@@ -58,13 +56,11 @@
     }
     #btn-settings:active { background: #eee; }
 
-    /* モーダル共通 */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 3000; display: none; align-items: center; justify-content: center; }
     .modal-content { background: white; width: 90%; max-width: 380px; max-height: 85vh; border-radius: 15px; padding: 20px; overflow-y: auto; position: relative; }
     .close-btn { background: #444; color: white; border: none; width: 100%; padding: 12px; border-radius: 8px; font-weight: bold; margin-top: 15px; cursor: pointer; }
     .plus-code-ex { background: #eef2f7; padding: 8px; border-radius: 4px; font-family: monospace; font-size: 13px; border-left: 4px solid #3498db; }
 
-    /* 設定モーダル */
     #settings-modal .api-input-wrap { position: relative; margin: 10px 0; }
     #inp-apikey { font-family: monospace; font-size: 13px; padding-right: 44px; border: 2px solid #ccc; }
     #inp-apikey.valid { border-color: #27ae60; background: #f0fff4; }
@@ -80,13 +76,11 @@
     .settings-status.err { color: #e74c3c; font-weight: bold; }
     .api-note { font-size: 11px; color: #888; line-height: 1.7; margin-top: 10px; background: #f8f8f8; padding: 10px; border-radius: 8px; }
 
-    /* 結果パネル */
     #result-panel { position: absolute; left: 10px; width: calc(100vw - 20px); max-width: 310px; padding: 20px; background: #1a252f; color: white; display: none; text-align: center; border: 3px solid #f1c40f; z-index: 1001; }
     .res-val { font-size: 42px; font-weight: 900; color: #f1c40f; line-height: 1; font-family: 'Courier New', monospace; }
     .dist-box-label { background: #ff0000 !important; color: #ffffff !important; border: 2px solid #ffffff; border-radius: 4px; font-weight: 900; font-size: 14px; width: 55px !important; height: 26px !important; text-align: center; display: flex; align-items: center; justify-content: center; }
     .area-label-ultra { background: #000000; color: #ffffff; border: 2px solid #ffffff; border-radius: 50%; width: 40px !important; height: 40px !important; line-height: 36px; text-align: center; font-weight: 900; font-size: 20px; }
 
-    /* 一括入力 */
     #bulk-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f0f2f5; z-index: 2000; flex-direction: column; }
     #bulk-header { background: #1a252f; color: white; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; border-bottom: 3px solid #ff0000; }
     #bulk-header .bulk-title { font-size: 16px; font-weight: 900; color: #f1c40f; }
@@ -120,10 +114,8 @@
 
 <div id="map"></div>
 
-<!-- 歯車ボタン -->
 <button id="btn-settings" onclick="openSettings()">⚙️</button>
 
-<!-- メインパネル -->
 <div id="form-panel" class="floating-panel">
   <div style="margin-bottom:5px; display:flex; align-items:center;">
     <div class="panel-title">帰宅班マップ</div>
@@ -152,10 +144,9 @@
   <a class="bulk-link" onclick="openBulkScreen()">一括入力モード →</a>
 </div>
 
-<!-- 入力説明モーダル -->
 <div id="modal-overlay" class="modal-overlay" onclick="toggleModal(false)">
   <div class="modal-content" onclick="event.stopPropagation()">
-    <h3 style="margin-top:0; color:#ff0000;" id="modal-title">📍 座標の取得方法</h3>
+    <h3 style="margin-top:0; color:#ff0000;" id="modal-title">📍 入力方法</h3>
     <div id="modal-body-coords">
       <p style="font-size:13px;"><strong>【スマホ：Plus Code】</strong><br>1. Googleマップで場所を<strong>長押し</strong><br>2. 下部の住所をタップして詳細を開く</p>
       <div style="background:#eee; padding:10px; border-radius:8px; text-align:center;">
@@ -177,16 +168,11 @@
   </div>
 </div>
 
-<!-- 設定モーダル -->
 <div id="settings-modal" class="modal-overlay" onclick="closeSettings()">
   <div class="modal-content" onclick="event.stopPropagation()">
     <h3 style="margin-top:0; color:#1a252f;">⚙️ 設定</h3>
-
     <p style="font-size:13px; font-weight:bold; margin-bottom:4px;">Google Maps APIキー</p>
-    <p style="font-size:12px; color:#555; margin-top:0;">
-      APIキーを入力・適用すると、地図がGoogleマップに切り替わり、住所入力で判定できるようになります。未入力の場合は国土地理院マップ＋座標入力で動作します。
-    </p>
-
+    <p style="font-size:12px; color:#555; margin-top:0;">APIキーを入力・適用すると、地図がGoogleマップに切り替わり、住所入力で判定できるようになります。未入力の場合は国土地理院マップ＋座標入力で動作します。</p>
     <div class="api-input-wrap">
       <input type="password" id="inp-apikey" placeholder="AIza..." autocomplete="off">
       <button id="btn-toggle-key" onclick="toggleKeyVisibility()" title="表示切替">👁</button>
@@ -194,19 +180,16 @@
     <button id="btn-apply-key" onclick="applyApiKey()">✅ 適用してGoogleモードに切替</button>
     <button id="btn-clear-key" onclick="clearApiKey()">🗑 キーを削除して地理院モードに戻す</button>
     <div class="settings-status" id="settings-status"></div>
-
     <div class="api-note">
       💡 <strong>APIキーの取得方法：</strong><br>
       Google Cloud Console → 「Maps JavaScript API」と「Geocoding API」を有効化してキーを発行してください。<br><br>
       🔒 <strong>セキュリティ：</strong><br>
-      キーはこのデバイスのブラウザ内にのみ保存されます。外部サーバーには送信されません。
+      キーはこのデバイスのブラウザ内にのみ保存されます。外部サーバーには送信されません。Google Cloud側でHTTPリファラ制限をかけることを推奨します。
     </div>
-
     <button class="close-btn" onclick="closeSettings()">閉じる</button>
   </div>
 </div>
 
-<!-- 結果パネル -->
 <div id="result-panel" class="floating-panel">
   <div style="display: flex; justify-content: space-around; align-items: center; margin-bottom: 10px;">
     <div><span style="font-size:12px; color:#f1c40f; display:block;">距離</span><span id="res-dist" class="res-val">--</span></div>
@@ -216,7 +199,6 @@
   <button onclick="closeResult()" style="width:100%; padding:8px; background:#444; border:none; color:white; border-radius:4px; cursor:pointer; font-weight:bold;">閉じる</button>
 </div>
 
-<!-- 一括入力画面 -->
 <div id="bulk-screen">
   <div id="bulk-header">
     <span class="bulk-title">一括入力モード</span>
@@ -272,7 +254,6 @@ const STORES = [
   { name: "やすだ大和店", lat: 35.4960645, lng: 139.4647883 }
 ];
 
-// ===== モード管理 =====
 let googleMode = false;
 let googleApiKey = '';
 let leafletMap = null;
@@ -280,10 +261,8 @@ let googleMap = null;
 let guideLayer, calcLayer;
 let googleGuideObjects = [];
 let googleCalcObjects = [];
-
 const STORAGE_KEY = 'kikitaihan_gmaps_key';
 
-// ===== 初期化 =====
 function init() {
   const selector = document.getElementById('sel-store');
   STORES.forEach((s, i) => {
@@ -294,7 +273,6 @@ function init() {
   selector.onchange = updateView;
   document.getElementById('btn-calc').onclick = calculate;
 
-  // 保存済みキーを確認
   const savedKey = localStorage.getItem(STORAGE_KEY);
   if (savedKey) {
     googleApiKey = savedKey;
@@ -304,11 +282,8 @@ function init() {
   } else {
     initLeafletMode();
   }
-
-  resetBulk();
 }
 
-// ===== Leafletモード初期化 =====
 function initLeafletMode() {
   googleMode = false;
   updateModeUI();
@@ -325,18 +300,16 @@ function initLeafletMode() {
   guideLayer = L.featureGroup().addTo(leafletMap);
   calcLayer = L.featureGroup().addTo(leafletMap);
   updateView();
+  resetBulk();
 }
 
-// ===== Googleモード初期化 =====
 function initGoogleMode() {
-  // 既存のLeafletを破棄
   if (leafletMap) {
     leafletMap.remove();
     leafletMap = null;
   }
   document.getElementById('map').innerHTML = '';
 
-  // Google Maps JS APIを動的ロード
   if (!window.google || !window.google.maps) {
     const script = document.createElement('script');
     script.src = `https://maps.googleapis.com/maps/api/js?key=${googleApiKey}&language=ja&callback=onGoogleMapsReady`;
@@ -364,9 +337,9 @@ window.onGoogleMapsReady = function() {
   });
 
   updateView();
+  resetBulk();
 };
 
-// ===== モードUI更新 =====
 function updateModeUI() {
   const badge = document.getElementById('mode-badge');
   const hint = document.getElementById('input-hint-text');
@@ -392,15 +365,13 @@ function updateModeUI() {
   }
 }
 
-// ===== 設定モーダル =====
 function openSettings() {
   const key = localStorage.getItem(STORAGE_KEY) || '';
   document.getElementById('inp-apikey').value = key;
   if (key) document.getElementById('inp-apikey').classList.add('valid');
-  document.getElementById('settings-status').textContent = googleMode
-    ? '現在：Googleモードで動作中'
-    : '現在：地理院モードで動作中';
-  document.getElementById('settings-status').className = 'settings-status ' + (googleMode ? 'ok' : '');
+  const status = document.getElementById('settings-status');
+  status.textContent = googleMode ? '現在：Googleモードで動作中' : '現在：地理院モードで動作中';
+  status.className = 'settings-status ' + (googleMode ? 'ok' : '');
   document.getElementById('settings-modal').style.display = 'flex';
 }
 
@@ -422,7 +393,6 @@ function applyApiKey() {
   showSettingsStatus('保存しました。Googleモードに切替中…', 'ok');
   setTimeout(() => {
     closeSettings();
-    // 既存のgoogleスクリプトがあれば削除して再ロード
     const old = document.querySelector('script[src*="maps.googleapis.com"]');
     if (old) old.remove();
     window.google = undefined;
@@ -448,7 +418,6 @@ function showSettingsStatus(msg, cls) {
   el.className = 'settings-status ' + cls;
 }
 
-// ===== 住所→座標変換（Geocoding API） =====
 async function geocode(address) {
   const res = await fetch(
     `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${googleApiKey}&language=ja`
@@ -459,7 +428,6 @@ async function geocode(address) {
   return { lat: loc.lat, lng: loc.lng, formatted: data.results[0].formatted_address };
 }
 
-// ===== 共通UI =====
 function toggleModal(show) { document.getElementById('modal-overlay').style.display = show ? 'flex' : 'none'; }
 function toggleClear() {
   const inp = document.getElementById('inp-coords');
@@ -480,7 +448,6 @@ function closeResult() { document.getElementById('result-panel').style.display =
 function openBulkScreen() { document.getElementById('bulk-screen').style.display = 'flex'; }
 function closeBulkScreen() { document.getElementById('bulk-screen').style.display = 'none'; }
 
-// ===== 地図更新 =====
 function updateView() {
   const store = STORES[document.getElementById('sel-store').value];
   closeResult();
@@ -498,7 +465,6 @@ function updateView() {
   }
 }
 
-// ===== 判定実行 =====
 async function calculate() {
   const store = STORES[document.getElementById('sel-store').value];
   const input = document.getElementById('inp-coords').value.trim();
@@ -567,7 +533,6 @@ async function calculate() {
   showResult();
 }
 
-// ===== 計算ロジック =====
 function calcResult(store, targetLat, targetLng) {
   const R = 6371;
   const dLat = (targetLat - store.lat) * Math.PI / 180;
@@ -593,7 +558,6 @@ function getDestPoint(lat, lng, dist, angle) {
   return { lat: la2*180/Math.PI, lng: lo2*180/Math.PI };
 }
 
-// ===== Leaflet描画 =====
 function drawLeafletGuides(lat, lng) {
   for (let i = 1; i <= 12; i++) {
     const angle = i * 30;
@@ -617,7 +581,6 @@ function drawLeafletArea(store, dClass, hour) {
   L.polygon(p.map(x => [x.lat, x.lng]), { color: '#ff0000', fillOpacity: 0.5 }).addTo(calcLayer);
 }
 
-// ===== Google Maps描画 =====
 function clearGoogleLayers() {
   googleGuideObjects.forEach(o => o.setMap(null));
   googleGuideObjects = [];
@@ -664,31 +627,6 @@ function drawGoogleArea(store, dClass, hour) {
     fillColor: '#ff0000', fillOpacity: 0.4, map: googleMap
   });
   googleCalcObjects.push(poly);
-}
-
-// ===== 一括入力 =====
-function calcCode(store, input) {
-  let targetLat, targetLng;
-  if (input.includes('+')) {
-    const codePart = input.split(/[\s,、　]/)[0].trim().toUpperCase();
-    if (!OpenLocationCode.isValid(codePart)) return null;
-    const fullCode = OpenLocationCode.isFull(codePart) ? codePart : OpenLocationCode.recoverNearest(codePart, store.lat, store.lng);
-    const res = OpenLocationCode.decode(fullCode);
-    targetLat = res.latitudeCenter; targetLng = res.longitudeCenter;
-  } else {
-    const match = input.match(/(-?\d+\.?\d*)\s*[,\s]\s*(-?\d+\.?\d*)/);
-    if (!match) return null;
-    targetLat = parseFloat(match[1]); targetLng = parseFloat(match[2]);
-  }
-  const r = calcResult(store, targetLat, targetLng);
-  return { dist: r.dStr, hour: r.hStr };
-}
-
-async function calcCodeGoogle(store, address) {
-  const result = await geocode(address);
-  if (!result) return null;
-  const r = calcResult(store, result.lat, result.lng);
-  return { dist: r.dStr, hour: r.hStr };
 }
 
 function addBulkRow(name) {
@@ -760,9 +698,28 @@ async function runAll() {
     try {
       let result;
       if (googleMode) {
-        result = await calcCodeGoogle(STORES[storeIdx], coordVal);
+        const geo = await geocode(coordVal);
+        if (geo) {
+          const r = calcResult(STORES[storeIdx], geo.lat, geo.lng);
+          result = { dist: r.dStr, hour: r.hStr };
+        }
       } else {
-        result = calcCode(STORES[storeIdx], coordVal);
+        let targetLat, targetLng;
+        if (coordVal.includes('+')) {
+          const codePart = coordVal.split(/[\s,、　]/)[0].trim().toUpperCase();
+          if (!OpenLocationCode.isValid(codePart)) throw new Error('invalid');
+          const fullCode = OpenLocationCode.isFull(codePart)
+            ? codePart
+            : OpenLocationCode.recoverNearest(codePart, STORES[storeIdx].lat, STORES[storeIdx].lng);
+          const res = OpenLocationCode.decode(fullCode);
+          targetLat = res.latitudeCenter; targetLng = res.longitudeCenter;
+        } else {
+          const match = coordVal.match(/(-?\d+\.?\d*)\s*[,\s]\s*(-?\d+\.?\d*)/);
+          if (!match) throw new Error('invalid');
+          targetLat = parseFloat(match[1]); targetLng = parseFloat(match[2]);
+        }
+        const r = calcResult(STORES[storeIdx], targetLat, targetLng);
+        result = { dist: r.dStr, hour: r.hStr };
       }
       if (result) {
         distEl.textContent = result.dist; hourEl.textContent = result.hour;
