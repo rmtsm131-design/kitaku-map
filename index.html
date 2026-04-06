@@ -16,7 +16,6 @@
       backdrop-filter: blur(8px); border: 2px solid #333;
     }
     #form-panel { top: 10px; left: 10px; width: calc(100vw - 20px); max-width: 310px; padding: 15px; }
-    #form-panel.disabled { pointer-events: none; opacity: 0.5; }
     .panel-title { font-size: 16px; font-weight: 900; color: #ff0000; margin-bottom: 0; border-left: 6px solid #ff0000; padding-left: 10px; }
     .help-link { display: block; text-align: right; font-size: 11px; color: #ff0000; text-decoration: underline; cursor: pointer; margin-bottom: 8px; }
     .step-label { font-size: 11px; font-weight: 900; color: #fff; background: #ff0000; display: inline-block; padding: 2px 7px; border-radius: 10px; margin-bottom: 5px; }
@@ -54,7 +53,7 @@
     .version-history-item ul { margin: 4px 0 0 0; padding-left: 18px; font-size: 12px; color: #444; line-height: 1.8; }
 
     /* 結果パネル */
-    #result-panel { position: absolute; left: 10px; width: calc(100vw - 20px); max-width: 310px; padding: 20px; background: #1a252f; color: white; display: none; text-align: center; border: 3px solid #f1c40f; z-index: 1001; }
+    #result-panel { bottom: 10px; left: 10px; width: calc(100vw - 20px); max-width: 310px; padding: 20px; background: #1a252f; color: white; display: none; text-align: center; border: 3px solid #f1c40f; }
     .res-val { font-size: 42px; font-weight: 900; color: #f1c40f; line-height: 1; font-family: 'Courier New', monospace; }
     .dist-box-label { background: #ff0000 !important; color: #ffffff !important; border: 2px solid #ffffff; border-radius: 4px; font-weight: 900; font-size: 14px; width: 55px !important; height: 26px !important; line-height: 22px; text-align: center; display: flex; align-items: center; justify-content: center; }
     .area-label-ultra { background: #000000; color: #ffffff; border: 2px solid #ffffff; border-radius: 50%; width: 40px !important; height: 40px !important; line-height: 36px; text-align: center; font-weight: 900; font-size: 20px; }
@@ -169,7 +168,7 @@
     <div><span style="font-size:12px; color:#f1c40f; display:block;">方角</span><span id="res-hour" class="res-val">--</span></div>
   </div>
   <div id="res-detail" style="font-size:12px; color:#bdc3c7; margin-bottom:10px;"></div>
-  <button onclick="closeResult()" style="width:100%; padding:8px; background:#444; border:none; color:white; border-radius:4px; cursor:pointer;">閉じる</button>
+  <button onclick="this.parentElement.style.display='none'" style="width:100%; padding:8px; background:#444; border:none; color:white; border-radius:4px; cursor:pointer;">閉じる</button>
 </div>
 
 <div id="toast">結果をコピーしました</div>
@@ -243,20 +242,6 @@ function clearInput() {
   document.getElementById('inp-coords').value = '';
   document.getElementById('btn-clear').style.display = 'none';
   document.getElementById('inp-coords').focus();
-}
-
-function showResult() {
-  const formPanel = document.getElementById('form-panel');
-  const resultPanel = document.getElementById('result-panel');
-  const rect = formPanel.getBoundingClientRect();
-  resultPanel.style.top = (rect.top - resultPanel.offsetHeight - 8) + 'px';
-  resultPanel.style.display = 'block';
-  formPanel.classList.add('disabled');
-}
-
-function closeResult() {
-  document.getElementById('result-panel').style.display = 'none';
-  document.getElementById('form-panel').classList.remove('disabled');
 }
 
 function openBulkScreen() { document.getElementById('bulk-screen').style.display = 'flex'; }
@@ -436,7 +421,7 @@ function drawGuides(lat, lng) {
 function updateView() {
   const store = STORES[document.getElementById('sel-store').value];
   guideLayer.clearLayers(); calcLayer.clearLayers();
-  closeResult();
+  document.getElementById('result-panel').style.display = 'none';
   drawGuides(store.lat, store.lng);
   L.marker([store.lat, store.lng]).addTo(guideLayer).bindPopup(`<strong>${store.name}</strong>`).openPopup();
   map.setView([store.lat, store.lng], 13);
@@ -485,12 +470,10 @@ function calculate() {
   L.marker([targetLat,targetLng]).addTo(calcLayer);
   L.polyline([[store.lat,store.lng],[targetLat,targetLng]],{color:'#1a252f',dashArray:'5,10'}).addTo(calcLayer);
   map.fitBounds(L.latLngBounds([store.lat,store.lng],[targetLat,targetLng]),{padding:[50,50]});
-
   document.getElementById('res-dist').textContent = dStr;
   document.getElementById('res-hour').textContent = hStr;
   document.getElementById('res-detail').textContent = `${dist.toFixed(2)} km`;
-  showResult();
-
+  document.getElementById('result-panel').style.display = 'block';
   if (navigator.clipboard) {
     navigator.clipboard.writeText(`距離:${dStr} 方角:${hStr}`).then(() => {
       const t = document.getElementById('toast'); t.style.display='block'; t.style.opacity='1';
