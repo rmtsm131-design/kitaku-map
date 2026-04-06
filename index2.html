@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>帰宅班マップ</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+  <script src="openlocationcode.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 0; font-family: 'Arial Black', sans-serif; overflow: hidden; background: #f0f2f5; }
+    #map { width: 100vw; height: 100vh; z-index: 1; }
+    .floating-panel {
+      position: absolute; z-index: 1000; background: rgba(255,255,255,0.98);
+      border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      backdrop-filter: blur(8px); border: 2px solid #333;
+    }
+    #form-panel { top: 10px; left: 10px; width: 310px; padding: 15px; }
+    .panel-title { font-size: 16px; font-weight: 900; color: #ff0000; margin-bottom: 0; border-left: 6px solid #ff0000; padding-left: 10px; }
+    .help-link { display: block; text-align: right; font-size: 11px; color: #ff0000; text-decoration: underline; cursor: pointer; margin-bottom: 8px; }
+    .step-label { font-size: 11px; font-weight: 900; color: #fff; background: #ff0000; display: inline-block; padding: 2px 7px; border-radius: 10px; margin-bottom: 5px; }
+    .input-hint { font-size: 10px; color: #888; margin: 3px 0 6px 2px; line-height: 1.5; }
+    .input-wrapper { position: relative; margin-bottom: 4px; }
+    .input-wrapper input { padding-right: 44px; }
+    .clear-btn {
+      position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+      width: 32px; height: 32px; border-radius: 50%; background: #ccc; border: none;
+      color: #fff; font-size: 18px; font-weight: 900; cursor: pointer;
+      display: none; align-items: center; justify-content: center; line-height: 1;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .clear-btn:active { background: #999; }
+    input, select { width: 100%; padding: 12px; border: 2px solid #ccc; border-radius: 8px; font-size: 14px; font-weight: bold; }
+    #inp-coords { border: 2px solid #ff0000; background: #fffbe6; }
+    #btn-calc { width: 100%; padding: 15px; background: #ff0000; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 900; font-size: 16px; box-shadow: 0 4px 0 #b30000; }
+    #btn-calc:active { transform: translateY(2px); box-shadow: none; }
+    .bulk-link { display: block; text-align: center; font-size: 11px; color: #999; text-decoration: none; margin-top: 10px; cursor: pointer; }
+    .bulk-link:hover { color: #666; }
+    .step-divider { border: none; border-top: 1px dashed #ddd; margin: 10px 0; }
+
+    /* モーダル共通 */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 3000; display: none; align-items: center; justify-content: center; }
+    .modal-content { background: white; width: 90%; max-width: 380px; max-height: 85vh; border-radius: 15px; padding: 20px; overflow-y: auto; position: relative; }
+    .close-btn { background: #444; color: white; border: none; width: 100%; padding: 12px; border-radius: 8px; font-weight: bold; margin-top: 15px; cursor: pointer; }
+    .plus-code-ex { background: #eef2f7; padding: 8px; border-radius: 4px; font-family: monospace; font-size: 13px; border-left: 4px solid #3498db; }
+
+    /* バージョン履歴モーダル */
+    .version-tag { font-size: 11px; font-weight: 700; color: #999; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+    .version-tag:hover { color: #666; }
+    .version-history-item { margin-bottom: 14px; }
+    .version-history-item .ver-num { font-size: 13px; font-weight: 900; color: #ff0000; }
+    .version-history-item .ver-date { font-size: 11px; color: #999; margin-left: 6px; }
+    .version-history-item ul { margin: 4px 0 0 0; padding-left: 18px; font-size: 12px; color: #444; line-height: 1.8; }
+
+    /* 結果パネル */
+    #result-panel { top: 10px; right: 10px; width: 310px; padding: 20px; background: #1a252f; color: white; display: none; text-align: center; border: 3px solid #f1c40f; }
+    .res-val { font-size: 42px; font-weight: 900; color: #f1c40f; line-height: 1; font-family: 'Courier New', monospace; }
+    .dist-box-label { background: #ff0000 !important; color: #ffffff !important; border: 2px solid #ffffff; border-radius: 4px; font-weight: 900; font-size: 14px; width: 55px !important; height: 26px !important; line-height: 22px; text-align: center; display: flex; align-items: center; justify-content: center; }
+    .area-label-ultra { background: #000000; color: #ffffff; border: 2px solid #ffffff; border-radius: 50%; width: 40px !important; height: 40px !important; line-height: 36px; text-align: center; font-weight: 900; font-size: 20px; }
+    #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 12px 24px; border-radius: 50px; font-size: 14px; font-weight: bold; z-index: 2000; display: none; opacity: 0; transition: opacity 0.3s; }
+
+    /* 一括入力モード */
+    #bulk-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f0f2f5; z-index: 2000; flex-direction: column; }
+    #bulk-header { background: #1a252f; color: white; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; border-bottom: 3px solid #ff0000; }
+    #bulk-header .bulk-title { font-size: 16px; font-weight: 900; color: #f1c40f; }
+    #bulk-header .back-btn { background: #444; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; }
+    #bulk-toolbar { background: white; padding: 10px 20px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; border-bottom: 1px solid #ddd; flex-wrap: wrap; }
+    #bulk-toolbar button { padding: 8px 18px; border: none; border-radius: 6px; font-weight: 900; cursor: pointer; font-size: 13px; }
+    #btn-add-row { background: #eee; color: #333; }
+    #btn-run-all { background: #ff0000; color: white; box-shadow: 0 3px 0 #b30000; }
+    #btn-run-all:active { transform: translateY(1px); box-shadow: none; }
+    #btn-reset-bulk { background: #eee; color: #333; }
+    #btn-dl-csv { background: #27ae60; color: white; display: none; }
+    #bulk-status { font-size: 12px; color: #888; font-weight: bold; margin-left: auto; }
+    #bulk-table-wrap { flex: 1; overflow-y: auto; padding: 16px 20px; }
+    #bulk-table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    #bulk-table th { background: #1a252f; color: #f1c40f; padding: 10px 12px; font-size: 13px; text-align: left; }
+    #bulk-table td { padding: 6px 8px; border-bottom: 1px solid #eee; vertical-align: middle; }
+    #bulk-table tr:last-child td { border-bottom: none; }
+    #bulk-table tr:hover td { background: #fafafa; }
+    .bulk-name-input { width: 100%; padding: 7px 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 13px; min-width: 100px; }
+    .bulk-store-select { width: 100%; padding: 7px 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 13px; min-width: 160px; }
+    .bulk-coord-wrap { position: relative; min-width: 180px; }
+    .bulk-coord-input { width: 100%; padding: 7px 34px 7px 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 13px; }
+    .bulk-clear-btn { position: absolute; right: 5px; top: 50%; transform: translateY(-50%); width: 24px; height: 24px; border-radius: 50%; background: #ccc; border: none; color: white; font-size: 14px; font-weight: 900; cursor: pointer; display: none; align-items: center; justify-content: center; line-height: 1; padding: 0; }
+    .bulk-result-dist, .bulk-result-hour { font-size: 20px; font-weight: 900; font-family: 'Courier New', monospace; color: #1a252f; text-align: center; min-width: 48px; }
+    .bulk-result-dist.filled, .bulk-result-hour.filled { color: #ff0000; }
+    .bulk-row-del { background: none; border: none; color: #ccc; font-size: 18px; cursor: pointer; padding: 4px 8px; border-radius: 4px; }
+    .bulk-row-del:hover { color: #ff0000; background: #fff0f0; }
+  </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<!-- メインパネル -->
+<div id="form-panel" class="floating-panel">
+  <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:5px;">
+    <div class="panel-title">帰宅班マップ</div>
+    <span class="version-tag" onclick="toggleVersionModal(true)">v1.1</span>
+  </div>
+  <span class="help-link" onclick="toggleModal(true)">📍 座標・Plus Codeの調べ方</span>
+
+  <span class="step-label">① 店舗を選んでください</span>
+  <select id="sel-store" style="margin-bottom: 10px;"></select>
+
+  <hr class="step-divider">
+
+  <span class="step-label">② 現在地を入力してください</span>
+  <div class="input-wrapper">
+    <input type="text" id="inp-coords" placeholder="例）35.7322, 139.7096" oninput="toggleClear()">
+    <button class="clear-btn" id="btn-clear" onclick="clearInput()" aria-label="クリア">×</button>
+  </div>
+  <div class="input-hint">
+    📌 Plus Code例：<strong>QP25+3G 板橋区</strong><br>
+    🗺 緯度経度例：<strong>35.7322, 139.7096</strong>
+  </div>
+
+  <hr class="step-divider">
+
+  <button id="btn-calc">③ 判定を実行</button>
+  <a class="bulk-link" onclick="openBulkScreen()">一括入力モード →</a>
+</div>
+
+<!-- 座標説明モーダル -->
+<div id="modal-overlay" class="modal-overlay" onclick="toggleModal(false)">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <h3 style="margin-top:0; color:#ff0000;">📍 座標の取得方法</h3>
+    <p style="font-size:13px;"><strong>【スマホ：Plus Code】</strong><br>1. Googleマップで場所を<strong>長押し</strong><br>2. 下部の住所をタップして詳細を開く</p>
+    <div style="background:#eee; padding:10px; border-radius:8px; text-align:center;">
+      <span style="font-size:11px; color:#666;">詳細画面のここをコピー ↓</span>
+      <div class="plus-code-ex">QP25+3G 板橋区、東京都</div>
+    </div>
+    <p style="font-size:12px; color:#666; margin-top:10px;">※コードをタップするだけでコピー可能です。</p>
+    <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
+    <p style="font-size:13px;"><strong>【PC：緯度経度】</strong><br>1. Googleマップ上を<strong>右クリック</strong><br>2. 一番上の数字をクリックしてコピー完了</p>
+    <button class="close-btn" onclick="toggleModal(false)">閉じる</button>
+  </div>
+</div>
+
+<!-- バージョン履歴モーダル -->
+<div id="version-modal-overlay" class="modal-overlay" onclick="toggleVersionModal(false)">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <h3 style="margin-top:0; color:#ff0000;">📋 バージョン履歴</h3>
+    <div class="version-history-item">
+      <span class="ver-num">v1.1</span><span class="ver-date">2025年</span>
+      <ul>
+        <li>一括入力モードを追加</li>
+        <li>複数名の帰宅班コードを一括計算・CSV出力に対応</li>
+      </ul>
+    </div>
+    <div class="version-history-item">
+      <span class="ver-num">v1.0</span><span class="ver-date">2025年</span>
+      <ul>
+        <li>初版リリース</li>
+        <li>店舗選択・座標入力による帰宅班コード判定</li>
+        <li>Plus Code・緯度経度に対応</li>
+      </ul>
+    </div>
+    <button class="close-btn" onclick="toggleVersionModal(false)">閉じる</button>
+  </div>
+</div>
+
+<!-- 結果パネル -->
+<div id="result-panel" class="floating-panel">
+  <div style="display: flex; justify-content: space-around; align-items: center; margin-bottom: 10px;">
+    <div><span style="font-size:12px; color:#f1c40f; display:block;">距離</span><span id="res-dist" class="res-val">--</span></div>
+    <div><span style="font-size:12px; color:#f1c40f; display:block;">方角</span><span id="res-hour" class="res-val">--</span></div>
+  </div>
+  <div id="res-detail" style="font-size:12px; color:#bdc3c7; margin-bottom:10px;"></div>
+  <button onclick="this.parentElement.style.display='none'" style="width:100%; padding:8px; background:#444; border:none; color:white; border-radius:4px; cursor:pointer;">閉じる</button>
+</div>
+
+<div id="toast">結果をコピーしました</div>
+
+<!-- 一括入力画面 -->
+<div id="bulk-screen">
+  <div id="bulk-header">
+    <span class="bulk-title">一括入力モード</span>
+    <button class="back-btn" onclick="closeBulkScreen()">← 地図に戻る</button>
+  </div>
+  <div id="bulk-toolbar">
+    <button id="btn-add-row" onclick="addBulkRow()">＋ 行を追加</button>
+    <button id="btn-run-all" onclick="runAll()">全件実行</button>
+    <button id="btn-reset-bulk" onclick="resetBulk()">リセット</button>
+    <button id="btn-dl-csv" onclick="downloadCSV()">CSVダウンロード</button>
+    <span id="bulk-status"></span>
+  </div>
+  <div id="bulk-table-wrap">
+    <table id="bulk-table">
+      <thead>
+        <tr>
+          <th style="width:120px;">氏名</th>
+          <th style="width:200px;">店舗</th>
+          <th>現在地（座標 / Plus Code）</th>
+          <th style="width:60px; text-align:center;">距離</th>
+          <th style="width:60px; text-align:center;">方角</th>
+          <th style="width:36px;"></th>
+        </tr>
+      </thead>
+      <tbody id="bulk-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const STORES = [
+  { name: "やすだ大山４号店", lat: 35.7489573, lng: 139.7024786 },
+  { name: "やすだ大山駅前５号店", lat: 35.7490262, lng: 139.702254 },
+  { name: "やすだ西池袋６号店", lat: 35.7322775, lng: 139.7096135 },
+  { name: "やすだ東池袋７号店", lat: 35.7323206, lng: 139.713297 },
+  { name: "やすだ東池袋９号店", lat: 35.7321962, lng: 139.7131243 },
+  { name: "やすだ清水町店", lat: 35.7623177, lng: 139.7067353 },
+  { name: "やすだ仲宿店", lat: 35.7531155, lng: 139.7097483 },
+  { name: "やすだ稲毛駅前店", lat: 35.6370021, lng: 140.0934135 },
+  { name: "やすだ幕張店", lat: 35.6595189, lng: 140.0490108 },
+  { name: "やすだ三郷店", lat: 35.8346346, lng: 139.8782249 },
+  { name: "やすだ南流山店", lat: 35.8395675, lng: 139.9052333 },
+  { name: "やすだ東大宮店", lat: 35.9475073, lng: 139.6402475 },
+  { name: "やすだ相模原店", lat: 35.5742511, lng: 139.3703126 },
+  { name: "やすだ所沢店", lat: 35.80974, lng: 139.5210794 },
+  { name: "やすだひばりヶ丘店", lat: 35.751145, lng: 139.5457364 },
+  { name: "やすだ柏店", lat: 35.8815891, lng: 139.952843 },
+  { name: "やすだ戸田店", lat: 35.8166037, lng: 139.6678818 },
+  { name: "やすだ八潮店", lat: 35.80658, lng: 139.8254406 },
+  { name: "やすだ前橋店", lat: 36.3779796, lng: 139.0944257 },
+  { name: "やすだ朝霞店", lat: 35.7992488, lng: 139.5945771 },
+  { name: "やすだ大和店", lat: 35.4960645, lng: 139.4647883 }
+];
+
+let map, guideLayer, calcLayer;
+
+function toggleModal(show) { document.getElementById('modal-overlay').style.display = show ? 'flex' : 'none'; }
+function toggleVersionModal(show) { document.getElementById('version-modal-overlay').style.display = show ? 'flex' : 'none'; }
+function toggleClear() {
+  const inp = document.getElementById('inp-coords');
+  const btn = document.getElementById('btn-clear');
+  btn.style.display = inp.value.length > 0 ? 'flex' : 'none';
+}
+function clearInput() {
+  document.getElementById('inp-coords').value = '';
+  document.getElementById('btn-clear').style.display = 'none';
+  document.getElementById('inp-coords').focus();
+}
+
+function openBulkScreen() {
+  const s = document.getElementById('bulk-screen');
+  s.style.display = 'flex';
+}
+function closeBulkScreen() {
+  document.getElementById('bulk-screen').style.display = 'none';
+}
+
+// 一括入力 行生成
+function addBulkRow(name) {
+  const tbody = document.getElementById('bulk-tbody');
+  const tr = document.createElement('tr');
+  const storeOptions = STORES.map((s, i) => `<option value="${i}">${s.name}</option>`).join('');
+
+  tr.innerHTML = `
+    <td><input class="bulk-name-input" type="text" placeholder="氏名" value="${name || ''}"></td>
+    <td><select class="bulk-store-select"><option value="">店舗を選択</option>${storeOptions}</select></td>
+    <td>
+      <div class="bulk-coord-wrap">
+        <input class="bulk-coord-input" type="text" placeholder="例）35.7322, 139.7096">
+        <button class="bulk-clear-btn" onclick="clearBulkCoord(this)">×</button>
+      </div>
+    </td>
+    <td><div class="bulk-result-dist">--</div></td>
+    <td><div class="bulk-result-hour">--</div></td>
+    <td><button class="bulk-row-del" onclick="this.closest('tr').remove()">✕</button></td>
+  `;
+
+  // 座標入力の×ボタン制御
+  const coordInput = tr.querySelector('.bulk-coord-input');
+  const clearBtn = tr.querySelector('.bulk-clear-btn');
+  coordInput.addEventListener('input', () => {
+    clearBtn.style.display = coordInput.value.length > 0 ? 'flex' : 'none';
+  });
+
+  // 氏名欄ペースト展開
+  const nameInput = tr.querySelector('.bulk-name-input');
+  nameInput.addEventListener('paste', handleNamePaste);
+
+  tbody.appendChild(tr);
+}
+
+function clearBulkCoord(btn) {
+  const input = btn.previousElementSibling;
+  input.value = '';
+  btn.style.display = 'none';
+  input.focus();
+}
+
+function handleNamePaste(e) {
+  const text = (e.clipboardData || window.clipboardData).getData('text');
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l !== '');
+  if (lines.length <= 1) return; // 1行なら通常ペースト
+  e.preventDefault();
+
+  const tbody = document.getElementById('bulk-tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  const currentRowIndex = rows.indexOf(e.target.closest('tr'));
+
+  lines.forEach((name, i) => {
+    const targetIndex = currentRowIndex + i;
+    if (targetIndex < rows.length) {
+      rows[targetIndex].querySelector('.bulk-name-input').value = name;
+    } else {
+      addBulkRow(name);
+    }
+  });
+}
+
+function resetBulk() {
+  document.getElementById('bulk-tbody').innerHTML = '';
+  document.getElementById('bulk-status').textContent = '';
+  document.getElementById('btn-dl-csv').style.display = 'none';
+  for (let i = 0; i < 5; i++) addBulkRow();
+}
+
+// 計算ロジック（共通）
+function getDestPoint(lat, lng, dist, angle) {
+  const R = 6371000, d = dist / R, a = angle * Math.PI / 180, la1 = lat * Math.PI / 180, lo1 = lng * Math.PI / 180;
+  const la2 = Math.asin(Math.sin(la1) * Math.cos(d) + Math.cos(la1) * Math.sin(d) * Math.cos(a));
+  const lo2 = lo1 + Math.atan2(Math.sin(a) * Math.sin(d) * Math.cos(la1), Math.cos(d) - Math.sin(la1) * Math.sin(la2));
+  return { lat: la2 * 180 / Math.PI, lng: lo2 * 180 / Math.PI };
+}
+
+function calcCode(store, input) {
+  let targetLat, targetLng;
+  if (input.includes('+')) {
+    const codePart = input.split(/[\s,、　]/)[0].trim().toUpperCase();
+    if (!OpenLocationCode.isValid(codePart)) return null;
+    const fullCode = OpenLocationCode.isFull(codePart)
+      ? codePart
+      : OpenLocationCode.recoverNearest(codePart, store.lat, store.lng);
+    const res = OpenLocationCode.decode(fullCode);
+    targetLat = res.latitudeCenter; targetLng = res.longitudeCenter;
+  } else {
+    const match = input.match(/(-?\d+\.?\d*)\s*[,\s]\s*(-?\d+\.?\d*)/);
+    if (!match) return null;
+    targetLat = parseFloat(match[1]); targetLng = parseFloat(match[2]);
+  }
+  const R = 6371;
+  const dLat = (targetLat - store.lat) * Math.PI / 180;
+  const dLon = (targetLng - store.lng) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(store.lat*Math.PI/180)*Math.cos(targetLat*Math.PI/180)*Math.sin(dLon/2)**2;
+  const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const bearing = (Math.atan2(Math.sin(dLon)*Math.cos(targetLat*Math.PI/180), Math.cos(store.lat*Math.PI/180)*Math.sin(targetLat*Math.PI/180)-Math.sin(store.lat*Math.PI/180)*Math.cos(targetLat*Math.PI/180)*Math.cos(dLon))*180/Math.PI+360)%360;
+  let hour = Math.floor(((bearing + 15) % 360) / 30);
+  if (hour === 0) hour = 12;
+  let dStr = '00';
+  if (dist <= 10.0) { dStr = Math.ceil(dist / 5) * 5 < 10 ? '05' : '10'; }
+  return { dist: dStr, hour: hour.toString().padStart(2, '0') };
+}
+
+function runAll() {
+  const rows = document.querySelectorAll('#bulk-tbody tr');
+  let total = 0, success = 0;
+  rows.forEach(tr => {
+    const storeIdx = tr.querySelector('.bulk-store-select').value;
+    const coordVal = tr.querySelector('.bulk-coord-input').value.trim();
+    const distEl = tr.querySelector('.bulk-result-dist');
+    const hourEl = tr.querySelector('.bulk-result-hour');
+    if (!storeIdx || !coordVal) return; // スキップ
+    total++;
+    try {
+      const result = calcCode(STORES[storeIdx], coordVal);
+      if (result) {
+        distEl.textContent = result.dist;
+        hourEl.textContent = result.hour;
+        distEl.classList.add('filled');
+        hourEl.classList.add('filled');
+        success++;
+      } else {
+        distEl.textContent = 'ERR'; hourEl.textContent = 'ERR';
+        distEl.classList.remove('filled'); hourEl.classList.remove('filled');
+      }
+    } catch {
+      distEl.textContent = 'ERR'; hourEl.textContent = 'ERR';
+    }
+  });
+  document.getElementById('bulk-status').textContent = `${total}件中 ${success}件完了`;
+  if (success > 0) document.getElementById('btn-dl-csv').style.display = 'inline-block';
+}
+
+function downloadCSV() {
+  const rows = document.querySelectorAll('#bulk-tbody tr');
+  const lines = ['\uFEFF氏名,店舗,距離,方角']; // BOM付きUTF-8
+  rows.forEach(tr => {
+    const name = tr.querySelector('.bulk-name-input').value.trim();
+    const storeIdx = tr.querySelector('.bulk-store-select').value;
+    const distEl = tr.querySelector('.bulk-result-dist');
+    const hourEl = tr.querySelector('.bulk-result-hour');
+    if (!distEl.classList.contains('filled')) return;
+    const storeName = storeIdx !== '' ? STORES[storeIdx].name : '';
+    lines.push(`${name},${storeName},${distEl.textContent},${hourEl.textContent}`);
+  });
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = '帰宅班コード.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function init() {
+  const selector = document.getElementById('sel-store');
+  STORES.forEach((s, i) => { const o = document.createElement('option'); o.value = i; o.textContent = s.name; selector.appendChild(o); });
+  map = L.map('map', { zoomControl: false });
+  L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', { attribution: "国土地理院" }).addTo(map);
+  guideLayer = L.featureGroup().addTo(map);
+  calcLayer = L.featureGroup().addTo(map);
+  selector.onchange = updateView;
+  document.getElementById('btn-calc').onclick = calculate;
+  resetBulk();
+  updateView();
+}
+
+function drawGuides(lat, lng) {
+  const radii = [5000, 10000];
+  for (let i = 1; i <= 12; i++) {
+    const angle = i * 30;
+    const end = getDestPoint(lat, lng, 12000, (angle - 15));
+    L.polyline([[lat, lng], [end.lat, end.lng]], { color: '#ff0000', weight: 4, opacity: 0.2 }).addTo(guideLayer);
+    const numPos = getDestPoint(lat, lng, 8000, angle);
+    L.marker([numPos.lat, numPos.lng], { icon: L.divIcon({ className: 'area-label-ultra', html: i.toString().padStart(2, '0') }), interactive: false }).addTo(guideLayer);
+  }
+  radii.forEach(r => {
+    L.circle([lat, lng], { radius: r, color: '#ff0000', weight: 5, fillOpacity: 0, opacity: 0.5 }).addTo(guideLayer);
+    const labelPos = getDestPoint(lat, lng, r, 225);
+    L.marker([labelPos.lat, labelPos.lng], { icon: L.divIcon({ className: 'dist-box-label', html: `<span>${r / 1000}km</span>` }), interactive: false }).addTo(guideLayer);
+  });
+}
+
+function updateView() {
+  const store = STORES[document.getElementById('sel-store').value];
+  guideLayer.clearLayers(); calcLayer.clearLayers();
+  document.getElementById('result-panel').style.display = 'none';
+  drawGuides(store.lat, store.lng);
+  L.marker([store.lat, store.lng]).addTo(guideLayer).bindPopup(`<strong>${store.name}</strong>`).openPopup();
+  map.setView([store.lat, store.lng], 13);
+}
+
+function calculate() {
+  const store = STORES[document.getElementById('sel-store').value];
+  let input = document.getElementById('inp-coords').value.trim();
+  if (!input) return;
+  let targetLat, targetLng;
+  try {
+    if (input.includes('+')) {
+      const codePart = input.split(/[\s,、　]/)[0].trim().toUpperCase();
+      if (typeof OpenLocationCode === 'undefined') { alert("ライブラリの読み込みに失敗しました。"); return; }
+      if (!OpenLocationCode.isValid(codePart)) throw new Error("Invalid Plus Code");
+      let fullCode = OpenLocationCode.isFull(codePart) ? codePart : OpenLocationCode.recoverNearest(codePart, store.lat, store.lng);
+      const res = OpenLocationCode.decode(fullCode);
+      targetLat = res.latitudeCenter; targetLng = res.longitudeCenter;
+    } else {
+      const match = input.match(/(-?\d+\.?\d*)\s*[,\s]\s*(-?\d+\.?\d*)/);
+      if (!match) throw new Error("Invalid format");
+      targetLat = parseFloat(match[1]); targetLng = parseFloat(match[2]);
+    }
+  } catch(e) { alert("正しい形式で入力してください（Plus Codeまたは緯度経度）"); return; }
+
+  const R = 6371;
+  const dLat = (targetLat - store.lat) * Math.PI / 180;
+  const dLon = (targetLng - store.lng) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(store.lat*Math.PI/180)*Math.cos(targetLat*Math.PI/180)*Math.sin(dLon/2)**2;
+  const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  calcLayer.clearLayers();
+  const bearing = (Math.atan2(Math.sin(dLon)*Math.cos(targetLat*Math.PI/180), Math.cos(store.lat*Math.PI/180)*Math.sin(targetLat*Math.PI/180)-Math.sin(store.lat*Math.PI/180)*Math.cos(targetLat*Math.PI/180)*Math.cos(dLon))*180/Math.PI+360)%360;
+  let hour = Math.floor(((bearing + 15) % 360) / 30);
+  if (hour === 0) hour = 12;
+  const hStr = hour.toString().padStart(2, '0');
+  let dStr = '00';
+  if (dist <= 10.0) {
+    const dClass = Math.ceil(dist / 5) * 5;
+    dStr = dClass.toString().padStart(2, '0');
+    const p = [];
+    const drawHour = hour === 12 ? 0 : hour;
+    for(let i=drawHour*30-15;i<=drawHour*30+15;i+=2) p.push(getDestPoint(store.lat,store.lng,dClass*1000,i));
+    for(let i=drawHour*30+15;i>=drawHour*30-15;i-=2) p.push(getDestPoint(store.lat,store.lng,(dClass-5)*1000,i));
+    L.polygon(p.map(x=>[x.lat,x.lng]), {color:'#ff0000',fillOpacity:0.5}).addTo(calcLayer);
+  }
+  L.marker([targetLat,targetLng]).addTo(calcLayer);
+  L.polyline([[store.lat,store.lng],[targetLat,targetLng]],{color:'#1a252f',dashArray:'5,10'}).addTo(calcLayer);
+  map.fitBounds(L.latLngBounds([store.lat,store.lng],[targetLat,targetLng]),{padding:[50,50]});
+  document.getElementById('res-dist').textContent = dStr;
+  document.getElementById('res-hour').textContent = hStr;
+  document.getElementById('res-detail').textContent = `${dist.toFixed(2)} km`;
+  document.getElementById('result-panel').style.display = 'block';
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(`距離:${dStr} 方角:${hStr}`).then(() => {
+      const t = document.getElementById('toast'); t.style.display='block'; t.style.opacity='1';
+      setTimeout(() => { t.style.opacity='0'; setTimeout(() => t.style.display='none', 300); }, 2000);
+    });
+  }
+}
+
+window.onload = init;
+</script>
+</body>
+</html>
