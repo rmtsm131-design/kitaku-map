@@ -130,7 +130,16 @@
     <div><span style="font-size:12px; color:#f1c40f; display:block;">方角</span><span id="res-hour" class="res-val">--</span></div>
   </div>
   <div id="res-detail" style="font-size:12px; color:#bdc3c7; margin-bottom:10px;"></div>
-  <button onclick="closeResult()" style="width:100%; padding:8px; background:#444; border:none; color:white; border-radius:4px; cursor:pointer;">閉じる</button>
+  <div style="display:flex; gap:8px;">
+    <button onclick="copyResult()" style="flex:1; padding:8px; background:#f1c40f; border:none; color:#1a252f; border-radius:4px; cursor:pointer; font-weight:900; display:flex; align-items:center; justify-content:center; gap:6px;">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="5" y="5" width="9" height="9" rx="1.5" stroke="#1a252f" stroke-width="1.8" fill="none"/>
+        <path d="M3 11V3a1 1 0 0 1 1-1h8" stroke="#1a252f" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+      コピー
+    </button>
+    <button onclick="closeResult()" style="flex:1; padding:8px; background:#444; border:none; color:white; border-radius:4px; cursor:pointer; font-weight:bold;">閉じる</button>
+  </div>
 </div>
 
 <div id="toast">結果をコピーしました</div>
@@ -213,6 +222,18 @@ function showResult() {
 
 function closeResult() {
   document.getElementById('result-panel').style.display = 'none';
+}
+
+function copyResult() {
+  const dist = document.getElementById('res-dist').textContent;
+  const hour = document.getElementById('res-hour').textContent;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(`距離:${dist} 方角:${hour}`).then(() => {
+      const t = document.getElementById('toast');
+      t.style.display = 'block'; t.style.opacity = '1';
+      setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.style.display = 'none', 300); }, 2000);
+    });
+  }
 }
 
 function openBulkScreen() { document.getElementById('bulk-screen').style.display = 'flex'; }
@@ -446,13 +467,6 @@ function calculate() {
   document.getElementById('res-hour').textContent = hStr;
   document.getElementById('res-detail').textContent = `${dist.toFixed(2)} km`;
   showResult();
-
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(`距離:${dStr} 方角:${hStr}`).then(() => {
-      const t = document.getElementById('toast'); t.style.display='block'; t.style.opacity='1';
-      setTimeout(() => { t.style.opacity='0'; setTimeout(() => t.style.display='none', 300); }, 2000);
-    });
-  }
 }
 
 window.onload = init;
