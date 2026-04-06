@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>帰宅班マップ</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
-  <script src="https://unpkg.com/open-location-code@1.0.3/js/src/openlocationcode.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/google/open-location-code/js/src/openlocationcode.js"></script>
   <style>
     * { box-sizing: border-box; }
     body { margin: 0; padding: 0; font-family: 'Arial Black', sans-serif; overflow: hidden; background: #f0f2f5; }
@@ -77,6 +77,103 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 
 <script>
+// Plus Code 自前実装（外部ライブラリ不要・完全スタンドアロン）
+const OLC = (() => {
+  const CODE_ALPHABET = '23456789CFGHJMPQRVWX';
+  const ENCODING_BASE = 20;
+  const PAIR_CODE_LENGTH = 10;
+  const SEPARATOR = '+';
+  const SEPARATOR_POSITION = 8;
+  const PADDING_CHARACTER = '0';
+
+  function isValid(code) {
+    if (!code || code.length < 2) return false;
+    const sep = code.indexOf(SEPARATOR);
+    if (sep === -1 || sep !== code.lastIndexOf(SEPARATOR)) return false;
+    if (sep % 2 !== 0) return false;
+    const clean = code.replace(SEPARATOR, '').replace(new RegExp('\\' + PADDING_CHARACTER + '+$'), '');
+    for (const c of clean.toUpperCase()) {
+      if (CODE_ALPHABET.indexOf(c) === -1) return false;
+    }
+    return true;
+  }
+
+  function isFull(code) {
+    if (!isValid(code)) return false;
+    return code.indexOf(SEPARATOR) === SEPARATOR_POSITION;
+  }
+
+  function isShort(code) {
+    if (!isValid(code)) return false;
+    return code.indexOf(SEPARATOR) < SEPARATOR_POSITION;
+  }
+
+  function decode(code) {
+    const clean = code.toUpperCase().replace(SEPARATOR, '').replace(new RegExp('\\' + PADDING_CHARACTER + '+'), '');
+    let latVal = -90 * 8000 * 3125;
+    let lngVal = -180 * 8000 * 3125;
+    let latPlaceVal = 8000 * 3125 * 20;
+    let lngPlaceVal = 8000 * 3125 * 20;
+    for (let i = 0; i < Math.min(clean.length, PAIR_CODE_LENGTH); i++) {
+      if (i % 2 === 0) {
+        latPlaceVal /= ENCODING_BASE;
+        latVal += CODE_ALPHABET.indexOf(clean[i]) * latPlaceVal;
+      } else {
+        lngPlaceVal /= ENCODING_BASE;
+        lngVal += CODE_ALPHABET.indexOf(clean[i]) * lngPlaceVal;
+      }
+    }
+    return {
+      latitudeCenter:  latVal / (8000 * 3125) + latPlaceVal  / (8000 * 3125 * 2),
+      longitudeCenter: lngVal / (8000 * 3125) + lngPlaceVal / (8000 * 3125 * 2)
+    };
+  }
+
+  function recoverNearest(shortCode, refLat, refLng) {
+    if (isFull(shortCode)) return shortCode;
+    const sc = shortCode.toUpperCase();
+    const sepIdx = sc.indexOf(SEPARATOR);
+    const prefixLen = SEPARATOR_POSITION - sepIdx;
+    const refCode = encode(refLat, refLng);
+    const prefix = refCode.substring(0, prefixLen);
+    let candidate = prefix + sc;
+    const decoded = decode(candidate);
+    const resolution = sepIdx === 2 ? 400 / ENCODING_BASE : 400 / (ENCODING_BASE * ENCODING_BASE);
+    if (Math.abs(decoded.latitudeCenter - refLat) > resolution / 2) {
+      const latDir = decoded.latitudeCenter < refLat ? resolution : -resolution;
+      const newLat = decoded.latitudeCenter + latDir;
+      candidate = encode(newLat, decoded.longitudeCenter).substring(0, prefixLen) + sc;
+    }
+    return candidate;
+  }
+
+  function encode(lat, lng, codeLength = PAIR_CODE_LENGTH) {
+    lat = Math.min(90, Math.max(-90, lat));
+    lng = ((lng + 180) % 360) - 180;
+    lat += 90; lng += 180;
+    let latVal = Math.round(lat * 8000 * 3125);
+    let lngVal = Math.round(lng * 8000 * 3125);
+    let code = '';
+    let latPlaceVal = 8000 * 3125 * 20;
+    let lngPlaceVal = 8000 * 3125 * 20;
+    for (let i = 0; i < codeLength; i++) {
+      if (i % 2 === 0) {
+        latPlaceVal /= ENCODING_BASE;
+        code += CODE_ALPHABET[Math.floor(latVal / latPlaceVal)];
+        latVal %= latPlaceVal;
+      } else {
+        lngPlaceVal /= ENCODING_BASE;
+        code += CODE_ALPHABET[Math.floor(lngVal / lngPlaceVal)];
+        lngVal %= lngPlaceVal;
+      }
+      if (i === SEPARATOR_POSITION - 1) code += SEPARATOR;
+    }
+    return code;
+  }
+
+  return { isValid, isFull, isShort, decode, encode, recoverNearest };
+})();
+
 const STORES = [
   { name: "やすだ大山４号店", lat: 35.7489573, lng: 139.7024786 },
   { name: "やすだ大山駅前５号店", lat: 35.7490262, lng: 139.702254 },
@@ -156,16 +253,10 @@ function calculate() {
 
   try {
     if (input.includes('+')) {
-      const codePart = input.split(/[\s,、　]/)[0].trim();
-      if (typeof OpenLocationCode === 'undefined') {
-        alert("ライブラリの読み込みに失敗しました。ページを再読み込みしてください。");
-        return;
-      }
-      let fullCode = codePart;
-      if (!OpenLocationCode.isFull(codePart)) {
-        fullCode = OpenLocationCode.recoverNearest(codePart, store.lat, store.lng);
-      }
-      const res = OpenLocationCode.decode(fullCode);
+      const codePart = input.split(/[\s,、　]/)[0].trim().toUpperCase();
+      if (!OLC.isValid(codePart)) throw new Error("Invalid Plus Code");
+      let fullCode = OLC.isFull(codePart) ? codePart : OLC.recoverNearest(codePart, store.lat, store.lng);
+      const res = OLC.decode(fullCode);
       targetLat = res.latitudeCenter;
       targetLng = res.longitudeCenter;
     } else {
