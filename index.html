@@ -74,7 +74,6 @@
     .settings-status.err { color: #e74c3c; font-weight: bold; }
     .api-note { font-size: 11px; color: #888; line-height: 1.7; margin-top: 10px; background: #f8f8f8; padding: 10px; border-radius: 8px; }
 
-    /* Autocomplete ドロップダウンのz-index調整 */
     .pac-container { z-index: 9999 !important; }
 
     #result-panel { position: absolute; left: 10px; width: calc(100vw - 20px); max-width: 310px; padding: 20px; background: #1a252f; color: white; display: none; text-align: center; border: 3px solid #f1c40f; z-index: 1001; }
@@ -114,7 +113,6 @@
 <body>
 
 <div id="map"></div>
-
 <button id="btn-settings" onclick="openSettings()">⚙️</button>
 
 <div id="form-panel" class="floating-panel">
@@ -123,12 +121,9 @@
     <span id="mode-badge">地理院</span>
   </div>
   <span class="help-link" onclick="toggleModal(true)">📍 入力方法を見る</span>
-
   <span class="step-label">① 店舗を選んでください</span>
   <select id="sel-store" style="margin-bottom: 10px;"></select>
-
   <hr class="step-divider">
-
   <span class="step-label">② 現在地を入力してください</span>
   <div class="input-wrapper">
     <input type="text" id="inp-coords" placeholder="例）35.7322, 139.7096" oninput="toggleClear()" autocomplete="off">
@@ -138,9 +133,7 @@
     📌 Plus Code例：<strong>QP25+3G 板橋区</strong><br>
     🗺 緯度経度例：<strong>35.7322, 139.7096</strong>
   </div>
-
   <hr class="step-divider">
-
   <button id="btn-calc">③ 判定を実行</button>
   <a class="bulk-link" onclick="openBulkScreen()">一括入力モード →</a>
 </div>
@@ -174,20 +167,16 @@
     <h3 style="margin-top:0; color:#1a252f;">⚙️ 設定</h3>
     <p style="font-size:13px; font-weight:bold; margin-bottom:4px;">Google Maps APIキー</p>
     <p style="font-size:12px; color:#555; margin-top:0;">APIキーを入力・適用すると、地図がGoogleマップに切り替わり、住所の予測変換付きで判定できるようになります。未入力の場合は国土地理院マップ＋座標入力で動作します。</p>
-
     <div id="key-saved-view">
       <span class="key-saved-label">✅ APIキー登録済み</span>
       <span class="key-mask">●●●●●●●●●●●●●●●●</span>
     </div>
-
     <div id="key-input-view">
       <input type="password" id="inp-apikey" placeholder="AIza..." autocomplete="off" style="margin: 10px 0;">
       <button id="btn-apply-key" onclick="applyApiKey()">✅ 適用してGoogleモードに切替</button>
     </div>
-
     <button id="btn-clear-key" onclick="clearApiKey()">🗑 APIキーを削除して地理院モードに戻す</button>
     <div class="settings-status" id="settings-status"></div>
-
     <div class="api-note">
       💡 <strong>APIキーの取得方法：</strong><br>
       Google Cloud Console → 「Maps JavaScript API」「Geocoding API」「Places API」を有効化してキーを発行してください。<br><br>
@@ -269,8 +258,9 @@ let googleMap = null;
 let guideLayer, calcLayer;
 let googleGuideObjects = [];
 let googleCalcObjects = [];
+let googleInfoWindow = null;
 let autocomplete = null;
-let selectedPlace = null; // Autocompleteで選択されたplace
+let selectedPlace = null;
 const STORAGE_KEY = 'kikitaihan_gmaps_key';
 
 function init() {
@@ -303,6 +293,7 @@ function initLeafletMode() {
     googleMap = null;
     googleGuideObjects = [];
     googleCalcObjects = [];
+    googleInfoWindow = null;
   }
 
   leafletMap = L.map('map', { zoomControl: false });
@@ -346,9 +337,8 @@ window.onGoogleMapsReady = function() {
     zoomControl: false,
   });
 
-  // Autocomplete初期化
+  googleInfoWindow = new google.maps.InfoWindow();
   initAutocomplete();
-
   updateView();
   resetBulk();
 };
@@ -373,7 +363,6 @@ function initAutocomplete() {
       selectedPlace = null;
     }
   });
-  // 入力変更時はselectedPlaceをリセット
   input.addEventListener('input', () => {
     selectedPlace = null;
     toggleClear();
@@ -417,9 +406,7 @@ function openSettings() {
   document.getElementById('settings-modal').style.display = 'flex';
 }
 
-function closeSettings() {
-  document.getElementById('settings-modal').style.display = 'none';
-}
+function closeSettings() { document.getElementById('settings-modal').style.display = 'none'; }
 
 function applyApiKey() {
   const key = document.getElementById('inp-apikey').value.trim();
@@ -440,10 +427,7 @@ function clearApiKey() {
   localStorage.removeItem(STORAGE_KEY);
   googleApiKey = '';
   showSettingsStatus('キーを削除しました。地理院モードに戻ります。', '');
-  setTimeout(() => {
-    closeSettings();
-    initLeafletMode();
-  }, 800);
+  setTimeout(() => { closeSettings(); initLeafletMode(); }, 800);
 }
 
 function showSettingsStatus(msg, cls) {
@@ -486,16 +470,43 @@ function closeBulkScreen() { document.getElementById('bulk-screen').style.displa
 function updateView() {
   const store = STORES[document.getElementById('sel-store').value];
   closeResult();
+
   if (googleMode && googleMap) {
+    // ガイド・計算結果・前の店舗ピンをすべてクリア
     clearGoogleLayers();
+
+    // ガイド線・サークル描画
     drawGoogleGuides(store.lat, store.lng);
-    new google.maps.Marker({ position: { lat: store.lat, lng: store.lng }, map: googleMap, title: store.name });
+
+    // 店舗マーカー（guideObjectsに追加して切替時に消えるようにする）
+    const storeMarker = new google.maps.Marker({
+      position: { lat: store.lat, lng: store.lng },
+      map: googleMap,
+      title: store.name
+    });
+    googleGuideObjects.push(storeMarker);
+
+    // 店舗名ポップアップ（自動で開く）
+    googleInfoWindow.setContent(`<strong>${store.name}</strong>`);
+    googleInfoWindow.open(googleMap, storeMarker);
+
+    // マーカークリックでも開けるように
+    storeMarker.addListener('click', () => {
+      googleInfoWindow.setContent(`<strong>${store.name}</strong>`);
+      googleInfoWindow.open(googleMap, storeMarker);
+    });
+
     googleMap.setCenter({ lat: store.lat, lng: store.lng });
     googleMap.setZoom(13);
+
   } else if (leafletMap) {
-    guideLayer.clearLayers(); calcLayer.clearLayers();
+    guideLayer.clearLayers();
+    calcLayer.clearLayers();
     drawLeafletGuides(store.lat, store.lng);
-    L.marker([store.lat, store.lng]).addTo(guideLayer).bindPopup(`<strong>${store.name}</strong>`).openPopup();
+    L.marker([store.lat, store.lng])
+      .addTo(guideLayer)
+      .bindPopup(`<strong>${store.name}</strong>`)
+      .openPopup();
     leafletMap.setView([store.lat, store.lng], 13);
   }
 }
@@ -511,7 +522,6 @@ async function calculate() {
     document.getElementById('btn-calc').textContent = '検索中…';
     document.getElementById('btn-calc').disabled = true;
     try {
-      // Autocompleteで選択済みならそのまま使う、未選択ならGeocoding APIにフォールバック
       if (selectedPlace) {
         targetLat = selectedPlace.lat;
         targetLng = selectedPlace.lng;
@@ -552,11 +562,16 @@ async function calculate() {
   if (googleMode && googleMap) {
     clearGoogleCalc();
     if (dStr !== '00') drawGoogleArea(store, dClass, hour);
-    new google.maps.Marker({ position: { lat: targetLat, lng: targetLng }, map: googleMap });
-    new google.maps.Polyline({
+    const targetMarker = new google.maps.Marker({
+      position: { lat: targetLat, lng: targetLng },
+      map: googleMap
+    });
+    googleCalcObjects.push(targetMarker);
+    const line = new google.maps.Polyline({
       path: [{ lat: store.lat, lng: store.lng }, { lat: targetLat, lng: targetLng }],
       strokeColor: '#1a252f', strokeOpacity: 0.7, strokeWeight: 2, map: googleMap
     });
+    googleCalcObjects.push(line);
     const bounds = new google.maps.LatLngBounds();
     bounds.extend({ lat: store.lat, lng: store.lng });
     bounds.extend({ lat: targetLat, lng: targetLng });
@@ -693,10 +708,10 @@ function addBulkRow(name) {
   const clearBtn = tr.querySelector('.bulk-clear-btn');
   coordInput.addEventListener('input', () => {
     clearBtn.style.display = coordInput.value.length > 0 ? 'flex' : 'none';
+    coordInput._selectedPlace = null;
   });
   tr.querySelector('.bulk-name-input').addEventListener('paste', handleNamePaste);
 
-  // Googleモードなら一括行にもAutocomplete付与
   if (googleMode && window.google && window.google.maps) {
     const ac = new google.maps.places.Autocomplete(coordInput, {
       componentRestrictions: { country: 'jp' },
@@ -713,9 +728,6 @@ function addBulkRow(name) {
         };
         clearBtn.style.display = 'flex';
       }
-    });
-    coordInput.addEventListener('input', () => {
-      coordInput._selectedPlace = null;
     });
   }
 
@@ -768,11 +780,10 @@ async function runAll() {
     try {
       let result;
       if (googleMode) {
-        let lat, lng, formatted;
+        let lat, lng;
         if (coordInput._selectedPlace) {
           lat = coordInput._selectedPlace.lat;
           lng = coordInput._selectedPlace.lng;
-          formatted = coordInput._selectedPlace.formatted;
         } else {
           const geo = await geocode(coordVal);
           if (!geo) throw new Error('not found');
