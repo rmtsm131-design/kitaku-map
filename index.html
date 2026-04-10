@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
@@ -11,117 +12,120 @@
     body { margin: 0; padding: 0; font-family: 'Arial Black', sans-serif; overflow: hidden; background: #f0f2f5; }
     #map { width: 100vw; height: 100vh; z-index: 1; }
 
-    .floating-panel {
-      position: absolute; z-index: 1000; background: rgba(255,255,255,0.98);
-      border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-      backdrop-filter: blur(8px); border: 2px solid #333;
-    }
-    #form-panel { top: 10px; left: 10px; width: calc(100vw - 20px); max-width: 310px; padding: 15px; }
-    .panel-title { font-size: 16px; font-weight: 900; color: #ff0000; margin-bottom: 0; border-left: 6px solid #ff0000; padding-left: 10px; }
-    .help-link { display: block; text-align: right; font-size: 11px; color: #ff0000; text-decoration: underline; cursor: pointer; margin-bottom: 8px; }
-    .step-label { font-size: 11px; font-weight: 900; color: #fff; background: #ff0000; display: inline-block; padding: 2px 7px; border-radius: 10px; margin-bottom: 5px; }
-    .input-hint { font-size: 10px; color: #888; margin: 3px 0 6px 2px; line-height: 1.5; }
-    .input-wrapper { position: relative; margin-bottom: 4px; }
-    .input-wrapper input { padding-right: 44px; }
-    .clear-btn {
-      position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
-      width: 32px; height: 32px; border-radius: 50%; background: #ccc; border: none;
-      color: #fff; font-size: 18px; font-weight: 900; cursor: pointer;
-      display: none; align-items: center; justify-content: center; line-height: 1;
-      -webkit-tap-highlight-color: transparent; z-index: 2;
-    }
-    .clear-btn:active { background: #999; }
-    input, select { width: 100%; padding: 12px; border: 2px solid #ccc; border-radius: 8px; font-size: 14px; font-weight: bold; }
-    #inp-coords { border: 2px solid #ff0000; background: #fffbe6; }
-    #btn-calc { width: 100%; padding: 15px; background: #ff0000; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 900; font-size: 16px; box-shadow: 0 4px 0 #b30000; }
-    #btn-calc:active { transform: translateY(2px); box-shadow: none; }
-    .bulk-link { display: block; text-align: center; font-size: 11px; color: #999; text-decoration: none; margin-top: 10px; cursor: pointer; }
-    .bulk-link:hover { color: #666; }
-    .step-divider { border: none; border-top: 1px dashed #ddd; margin: 10px 0; }
+```
+.floating-panel {
+  position: absolute; z-index: 1000; background: rgba(255,255,255,0.98);
+  border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  backdrop-filter: blur(8px); border: 2px solid #333;
+}
+#form-panel { top: 10px; left: 10px; width: calc(100vw - 20px); max-width: 310px; padding: 15px; }
+.panel-title { font-size: 16px; font-weight: 900; color: #ff0000; margin-bottom: 0; border-left: 6px solid #ff0000; padding-left: 10px; }
+.help-link { display: block; text-align: right; font-size: 11px; color: #ff0000; text-decoration: underline; cursor: pointer; margin-bottom: 8px; }
+.step-label { font-size: 11px; font-weight: 900; color: #fff; background: #ff0000; display: inline-block; padding: 2px 7px; border-radius: 10px; margin-bottom: 5px; }
+.input-hint { font-size: 10px; color: #888; margin: 3px 0 6px 2px; line-height: 1.5; }
+.input-wrapper { position: relative; margin-bottom: 4px; }
+.input-wrapper input { padding-right: 44px; }
+.clear-btn {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  width: 32px; height: 32px; border-radius: 50%; background: #ccc; border: none;
+  color: #fff; font-size: 18px; font-weight: 900; cursor: pointer;
+  display: none; align-items: center; justify-content: center; line-height: 1;
+  -webkit-tap-highlight-color: transparent; z-index: 2;
+}
+.clear-btn:active { background: #999; }
+input, select { width: 100%; padding: 12px; border: 2px solid #ccc; border-radius: 8px; font-size: 14px; font-weight: bold; }
+#inp-coords { border: 2px solid #ff0000; background: #fffbe6; }
+#btn-calc { width: 100%; padding: 15px; background: #ff0000; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 900; font-size: 16px; box-shadow: 0 4px 0 #b30000; }
+#btn-calc:active { transform: translateY(2px); box-shadow: none; }
+.bulk-link { display: block; text-align: center; font-size: 11px; color: #999; text-decoration: none; margin-top: 10px; cursor: pointer; }
+.bulk-link:hover { color: #666; }
+.step-divider { border: none; border-top: 1px dashed #ddd; margin: 10px 0; }
 
-    #mode-badge {
-      display: inline-block; font-size: 10px; font-weight: 900;
-      padding: 2px 7px; border-radius: 10px; margin-left: 6px;
-      background: #e0e0e0; color: #666; vertical-align: middle;
-    }
-    #mode-badge.google { background: #e8f5e9; color: #2e7d32; }
+#mode-badge {
+  display: inline-block; font-size: 10px; font-weight: 900;
+  padding: 2px 7px; border-radius: 10px; margin-left: 6px;
+  background: #e0e0e0; color: #666; vertical-align: middle;
+}
+#mode-badge.google { background: #e8f5e9; color: #2e7d32; }
 
-    #btn-settings {
-      position: absolute; top: 10px; right: 10px; z-index: 1001;
-      width: 44px; height: 44px; border-radius: 50%;
-      background: rgba(255,255,255,0.95); border: 2px solid #333;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      cursor: pointer; display: flex; align-items: center; justify-content: center;
-      font-size: 20px; -webkit-tap-highlight-color: transparent;
-    }
-    #btn-settings:active { background: #eee; }
+#btn-settings {
+  position: absolute; top: 10px; right: 10px; z-index: 1001;
+  width: 44px; height: 44px; border-radius: 50%;
+  background: rgba(255,255,255,0.95); border: 2px solid #333;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 20px; -webkit-tap-highlight-color: transparent;
+}
+#btn-settings:active { background: #eee; }
 
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 3000; display: none; align-items: center; justify-content: center; }
-    .modal-content { background: white; width: 90%; max-width: 380px; max-height: 85vh; border-radius: 15px; padding: 20px; overflow-y: auto; position: relative; }
-    .close-btn { background: #444; color: white; border: none; width: 100%; padding: 12px; border-radius: 8px; font-weight: bold; margin-top: 15px; cursor: pointer; }
-    .plus-code-ex { background: #eef2f7; padding: 8px; border-radius: 4px; font-family: monospace; font-size: 13px; border-left: 4px solid #3498db; }
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 3000; display: none; align-items: center; justify-content: center; }
+.modal-content { background: white; width: 90%; max-width: 380px; max-height: 85vh; border-radius: 15px; padding: 20px; overflow-y: auto; position: relative; }
+.close-btn { background: #444; color: white; border: none; width: 100%; padding: 12px; border-radius: 8px; font-weight: bold; margin-top: 15px; cursor: pointer; }
+.plus-code-ex { background: #eef2f7; padding: 8px; border-radius: 4px; font-family: monospace; font-size: 13px; border-left: 4px solid #3498db; }
 
-    #key-saved-view { display: none; background: #f0fff4; border: 2px solid #27ae60; border-radius: 8px; padding: 12px 14px; margin: 10px 0; }
-    #key-saved-view .key-mask { font-family: monospace; font-size: 16px; color: #1a252f; letter-spacing: 2px; display: block; margin-bottom: 6px; }
-    #key-saved-view .key-saved-label { font-size: 11px; color: #27ae60; font-weight: bold; }
-    #key-input-view { display: block; }
-    #inp-apikey { font-family: monospace; font-size: 13px; border: 2px solid #ccc; }
-    #btn-apply-key { width: 100%; padding: 13px; background: #1a252f; color: #f1c40f; border: none; border-radius: 8px; font-weight: 900; font-size: 15px; cursor: pointer; margin-top: 6px; }
-    #btn-apply-key:active { opacity: 0.8; }
-    #btn-clear-key { width: 100%; padding: 10px; background: #fee; color: #c0392b; border: 2px solid #e74c3c; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; margin-top: 8px; }
-    .settings-status { font-size: 12px; margin-top: 8px; text-align: center; min-height: 18px; }
-    .settings-status.ok { color: #27ae60; font-weight: bold; }
-    .settings-status.err { color: #e74c3c; font-weight: bold; }
-    .api-note { font-size: 11px; color: #888; line-height: 1.7; margin-top: 10px; background: #f8f8f8; padding: 10px; border-radius: 8px; }
+#key-saved-view { display: none; background: #f0fff4; border: 2px solid #27ae60; border-radius: 8px; padding: 12px 14px; margin: 10px 0; }
+#key-saved-view .key-mask { font-family: monospace; font-size: 16px; color: #1a252f; letter-spacing: 2px; display: block; margin-bottom: 6px; }
+#key-saved-view .key-saved-label { font-size: 11px; color: #27ae60; font-weight: bold; }
+#key-input-view { display: block; }
+#inp-apikey { font-family: monospace; font-size: 13px; border: 2px solid #ccc; }
+#btn-apply-key { width: 100%; padding: 13px; background: #1a252f; color: #f1c40f; border: none; border-radius: 8px; font-weight: 900; font-size: 15px; cursor: pointer; margin-top: 6px; }
+#btn-apply-key:active { opacity: 0.8; }
+#btn-clear-key { width: 100%; padding: 10px; background: #fee; color: #c0392b; border: 2px solid #e74c3c; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; margin-top: 8px; }
+.settings-status { font-size: 12px; margin-top: 8px; text-align: center; min-height: 18px; }
+.settings-status.ok { color: #27ae60; font-weight: bold; }
+.settings-status.err { color: #e74c3c; font-weight: bold; }
+.api-note { font-size: 11px; color: #888; line-height: 1.7; margin-top: 10px; background: #f8f8f8; padding: 10px; border-radius: 8px; }
 
-    .pac-container { z-index: 9999 !important; }
+.pac-container { z-index: 9999 !important; }
 
-    .dist-box-label { background: #ff0000 !important; color: #ffffff !important; border: 2px solid #ffffff; border-radius: 4px; font-weight: 900; font-size: 14px; width: 55px !important; height: 26px !important; text-align: center; display: flex; align-items: center; justify-content: center; }
-    .area-label-ultra { background: #000000; color: #ffffff; border: 2px solid #ffffff; border-radius: 50%; width: 40px !important; height: 40px !important; line-height: 36px; text-align: center; font-weight: 900; font-size: 20px; }
+.dist-box-label { background: #ff0000 !important; color: #ffffff !important; border: 2px solid #ffffff; border-radius: 4px; font-weight: 900; font-size: 14px; width: 55px !important; height: 26px !important; text-align: center; display: flex; align-items: center; justify-content: center; }
+.area-label-ultra { background: #000000; color: #ffffff; border: 2px solid #ffffff; border-radius: 50%; width: 40px !important; height: 40px !important; line-height: 36px; text-align: center; font-weight: 900; font-size: 20px; }
 
-    .gmap-dist-label {
-      background: #ff0000; color: #ffffff; border: 2px solid #ffffff;
-      border-radius: 4px; font-weight: 900; font-size: 14px;
-      padding: 2px 6px; font-family: 'Arial Black', sans-serif;
-      pointer-events: none; white-space: nowrap;
-    }
-    .gmap-hour-label {
-      background: #000000; color: #ffffff; border: 2px solid #ffffff;
-      border-radius: 50%; width: 36px; height: 36px; font-weight: 900; font-size: 18px;
-      display: flex; align-items: center; justify-content: center;
-      font-family: 'Arial Black', sans-serif; pointer-events: none;
-    }
+.gmap-dist-label {
+  background: #ff0000; color: #ffffff; border: 2px solid #ffffff;
+  border-radius: 4px; font-weight: 900; font-size: 14px;
+  padding: 2px 6px; font-family: 'Arial Black', sans-serif;
+  pointer-events: none; white-space: nowrap;
+}
+.gmap-hour-label {
+  background: #000000; color: #ffffff; border: 2px solid #ffffff;
+  border-radius: 50%; width: 36px; height: 36px; font-weight: 900; font-size: 18px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Arial Black', sans-serif; pointer-events: none;
+}
 
-    #result-panel { position: absolute; left: 10px; width: calc(100vw - 20px); max-width: 310px; padding: 20px; background: #1a252f; color: white; display: none; text-align: center; border: 3px solid #f1c40f; z-index: 1001; }
-    .res-val { font-size: 42px; font-weight: 900; color: #f1c40f; line-height: 1; font-family: 'Courier New', monospace; }
+#result-panel { position: absolute; left: 10px; width: calc(100vw - 20px); max-width: 310px; padding: 20px; background: #1a252f; color: white; display: none; text-align: center; border: 3px solid #f1c40f; z-index: 1001; }
+.res-val { font-size: 42px; font-weight: 900; color: #f1c40f; line-height: 1; font-family: 'Courier New', monospace; }
 
-    #bulk-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f0f2f5; z-index: 2000; flex-direction: column; }
-    #bulk-header { background: #1a252f; color: white; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; border-bottom: 3px solid #ff0000; }
-    #bulk-header .bulk-title { font-size: 16px; font-weight: 900; color: #f1c40f; }
-    #bulk-header .back-btn { background: #444; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; }
-    #bulk-toolbar { background: white; padding: 10px 20px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; border-bottom: 1px solid #ddd; flex-wrap: wrap; }
-    #bulk-toolbar button { padding: 8px 18px; border: none; border-radius: 6px; font-weight: 900; cursor: pointer; font-size: 13px; }
-    #btn-add-row { background: #eee; color: #333; }
-    #btn-run-all { background: #ff0000; color: white; box-shadow: 0 3px 0 #b30000; }
-    #btn-run-all:active { transform: translateY(1px); box-shadow: none; }
-    #btn-reset-bulk { background: #eee; color: #333; }
-    #btn-dl-csv { background: #27ae60; color: white; display: none; }
-    #bulk-status { font-size: 12px; color: #888; font-weight: bold; margin-left: auto; }
-    #bulk-table-wrap { flex: 1; overflow-y: auto; padding: 16px 20px; }
-    #bulk-table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    #bulk-table th { background: #1a252f; color: #f1c40f; padding: 10px 12px; font-size: 13px; text-align: left; }
-    #bulk-table td { padding: 6px 8px; border-bottom: 1px solid #eee; vertical-align: middle; }
-    #bulk-table tr:last-child td { border-bottom: none; }
-    #bulk-table tr:hover td { background: #fafafa; }
-    .bulk-name-input { width: 100%; padding: 7px 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 13px; min-width: 100px; }
-    .bulk-store-select { width: 100%; padding: 7px 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 13px; min-width: 160px; }
-    .bulk-coord-wrap { position: relative; min-width: 180px; }
-    .bulk-coord-input { width: 100%; padding: 7px 34px 7px 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 13px; }
-    .bulk-clear-btn { position: absolute; right: 5px; top: 50%; transform: translateY(-50%); width: 24px; height: 24px; border-radius: 50%; background: #ccc; border: none; color: white; font-size: 14px; font-weight: 900; cursor: pointer; display: none; align-items: center; justify-content: center; line-height: 1; padding: 0; }
-    .bulk-result-dist, .bulk-result-hour { font-size: 20px; font-weight: 900; font-family: 'Courier New', monospace; color: #1a252f; text-align: center; min-width: 48px; }
-    .bulk-result-dist.filled, .bulk-result-hour.filled { color: #ff0000; }
-    .bulk-row-del { background: none; border: none; color: #ccc; font-size: 18px; cursor: pointer; padding: 4px 8px; border-radius: 4px; }
-    .bulk-row-del:hover { color: #ff0000; background: #fff0f0; }
+#bulk-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f0f2f5; z-index: 2000; flex-direction: column; }
+#bulk-header { background: #1a252f; color: white; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; border-bottom: 3px solid #ff0000; }
+#bulk-header .bulk-title { font-size: 16px; font-weight: 900; color: #f1c40f; }
+#bulk-header .back-btn { background: #444; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; }
+#bulk-toolbar { background: white; padding: 10px 20px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; border-bottom: 1px solid #ddd; flex-wrap: wrap; }
+#bulk-toolbar button { padding: 8px 18px; border: none; border-radius: 6px; font-weight: 900; cursor: pointer; font-size: 13px; }
+#btn-add-row { background: #eee; color: #333; }
+#btn-run-all { background: #ff0000; color: white; box-shadow: 0 3px 0 #b30000; }
+#btn-run-all:active { transform: translateY(1px); box-shadow: none; }
+#btn-reset-bulk { background: #eee; color: #333; }
+#btn-dl-csv { background: #27ae60; color: white; display: none; }
+#bulk-status { font-size: 12px; color: #888; font-weight: bold; margin-left: auto; }
+#bulk-table-wrap { flex: 1; overflow-y: auto; padding: 16px 20px; }
+#bulk-table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+#bulk-table th { background: #1a252f; color: #f1c40f; padding: 10px 12px; font-size: 13px; text-align: left; }
+#bulk-table td { padding: 6px 8px; border-bottom: 1px solid #eee; vertical-align: middle; }
+#bulk-table tr:last-child td { border-bottom: none; }
+#bulk-table tr:hover td { background: #fafafa; }
+.bulk-name-input { width: 100%; padding: 7px 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 13px; min-width: 100px; }
+.bulk-store-select { width: 100%; padding: 7px 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 13px; min-width: 160px; }
+.bulk-coord-wrap { position: relative; min-width: 180px; }
+.bulk-coord-input { width: 100%; padding: 7px 34px 7px 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 13px; }
+.bulk-clear-btn { position: absolute; right: 5px; top: 50%; transform: translateY(-50%); width: 24px; height: 24px; border-radius: 50%; background: #ccc; border: none; color: white; font-size: 14px; font-weight: 900; cursor: pointer; display: none; align-items: center; justify-content: center; line-height: 1; padding: 0; }
+.bulk-result-dist, .bulk-result-hour { font-size: 20px; font-weight: 900; font-family: 'Courier New', monospace; color: #1a252f; text-align: center; min-width: 48px; }
+.bulk-result-dist.filled, .bulk-result-hour.filled { color: #ff0000; }
+.bulk-row-del { background: none; border: none; color: #ccc; font-size: 18px; cursor: pointer; padding: 4px 8px; border-radius: 4px; }
+.bulk-row-del:hover { color: #ff0000; background: #fff0f0; }
+```
+
   </style>
 </head>
 <body>
@@ -240,6 +244,7 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
 <script>
 const STORES = [
   { name: "やすだ大山４号店", lat: 35.7489573, lng: 139.7024786 },
@@ -463,6 +468,16 @@ async function geocode(address) {
   return { lat: loc.lat, lng: loc.lng, formatted: data.results[0].formatted_address };
 }
 
+async function findPlace(query) {
+  const res = await fetch(
+    `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(query)}&inputtype=textquery&fields=geometry,formatted_address&key=${googleApiKey}&language=ja`
+  );
+  const data = await res.json();
+  if (data.status !== 'OK' || !data.candidates.length) return null;
+  const loc = data.candidates[0].geometry.location;
+  return { lat: loc.lat, lng: loc.lng, formatted: data.candidates[0].formatted_address };
+}
+
 function toggleModal(show) { document.getElementById('modal-overlay').style.display = show ? 'flex' : 'none'; }
 function toggleClear() {
   const inp = document.getElementById('inp-coords');
@@ -666,7 +681,6 @@ function clearGoogleCalc() {
 }
 
 function drawGoogleGuides(lat, lng) {
-  // 放射線
   for (let i = 1; i <= 12; i++) {
     const angle = i * 30;
     const end = getDestPoint(lat, lng, 12000, angle - 15);
@@ -676,13 +690,11 @@ function drawGoogleGuides(lat, lng) {
     });
     googleGuideObjects.push(line);
 
-    // 時計数字ラベル（OverlayView使用）
     const numPos = getDestPoint(lat, lng, 8000, angle);
     const hourLabel = createGoogleLabel(numPos.lat, numPos.lng, i.toString().padStart(2, '0'), 'gmap-hour-label');
     googleGuideObjects.push(hourLabel);
   }
 
-  // 距離サークルとラベル
   [5000, 10000].forEach(r => {
     const circle = new google.maps.Circle({
       center: { lat, lng }, radius: r,
@@ -697,7 +709,6 @@ function drawGoogleGuides(lat, lng) {
   });
 }
 
-// Google Maps用カスタムオーバーレイラベル
 function createGoogleLabel(lat, lng, text, className) {
   class CustomLabel extends google.maps.OverlayView {
     constructor(lat, lng, text, className) {
@@ -753,7 +764,7 @@ function drawGoogleArea(store, dClass, hour) {
   googleCalcObjects.push(poly);
 }
 
-function addBulkRow(name) {
+function addBulkRow(name, coord) {
   const tbody = document.getElementById('bulk-tbody');
   const tr = document.createElement('tr');
   const storeOptions = STORES.map((s, i) => `<option value="${i}">${s.name}</option>`).join('');
@@ -763,7 +774,7 @@ function addBulkRow(name) {
     <td><select class="bulk-store-select"><option value="">店舗を選択</option>${storeOptions}</select></td>
     <td>
       <div class="bulk-coord-wrap">
-        <input class="bulk-coord-input" type="text" placeholder="${placeholder}" autocomplete="off">
+        <input class="bulk-coord-input" type="text" placeholder="${placeholder}" autocomplete="off" value="${coord || ''}">
         <button class="bulk-clear-btn" onclick="clearBulkCoord(this)">×</button>
       </div>
     </td>
@@ -773,10 +784,18 @@ function addBulkRow(name) {
   `;
   const coordInput = tr.querySelector('.bulk-coord-input');
   const clearBtn = tr.querySelector('.bulk-clear-btn');
+
+  // クリアボタンの初期表示（値がある場合）
+  if (coord) clearBtn.style.display = 'flex';
+
   coordInput.addEventListener('input', () => {
     clearBtn.style.display = coordInput.value.length > 0 ? 'flex' : 'none';
     coordInput._selectedPlace = null;
   });
+
+  // ▼ 住所欄の複数行ペースト対応（氏名欄と同様）
+  coordInput.addEventListener('paste', handleCoordPaste);
+
   tr.querySelector('.bulk-name-input').addEventListener('paste', handleNamePaste);
 
   if (googleMode && window.google && window.google.maps) {
@@ -823,6 +842,28 @@ function handleNamePaste(e) {
   });
 }
 
+// ▼ 住所欄の複数行ペースト処理（氏名欄の handleNamePaste と同じ仕組み）
+function handleCoordPaste(e) {
+  const text = (e.clipboardData || window.clipboardData).getData('text');
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l !== '');
+  if (lines.length <= 1) return; // 1行なら通常のペーストに任せる
+  e.preventDefault();
+  const rows = Array.from(document.getElementById('bulk-tbody').querySelectorAll('tr'));
+  const currentIndex = rows.indexOf(e.target.closest('tr'));
+  lines.forEach((coord, i) => {
+    const idx = currentIndex + i;
+    if (idx < rows.length) {
+      const input = rows[idx].querySelector('.bulk-coord-input');
+      const clearBtn = rows[idx].querySelector('.bulk-clear-btn');
+      input.value = coord;
+      input._selectedPlace = null;
+      clearBtn.style.display = coord.length > 0 ? 'flex' : 'none';
+    } else {
+      addBulkRow('', coord); // 行が足りなければ新規追加
+    }
+  });
+}
+
 function resetBulk() {
   document.getElementById('bulk-tbody').innerHTML = '';
   document.getElementById('bulk-status').textContent = '';
@@ -852,7 +893,7 @@ async function runAll() {
           lat = coordInput._selectedPlace.lat;
           lng = coordInput._selectedPlace.lng;
         } else {
-          const geo = await geocode(coordVal);
+          const geo = await findPlace(coordVal);
           if (!geo) throw new Error('not found');
           lat = geo.lat; lng = geo.lng;
         }
@@ -916,5 +957,6 @@ function downloadCSV() {
 
 window.onload = init;
 </script>
+
 </body>
 </html>
